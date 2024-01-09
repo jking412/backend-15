@@ -3,12 +3,11 @@ package com.example.backend.k3s;
 
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
-import io.kubernetes.client.openapi.models.V1Container;
-import io.kubernetes.client.openapi.models.V1ObjectMeta;
-import io.kubernetes.client.openapi.models.V1Pod;
-import io.kubernetes.client.openapi.models.V1PodSpec;
+import io.kubernetes.client.openapi.models.*;
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -18,6 +17,7 @@ public class K3sPod {
     private String imageName;
     private String imagePullPolicy;
     private Map<String,String> labels;
+    private List<Integer> ports;
 
     static String defaultPolicy = "IfNotPresent";
 
@@ -35,7 +35,15 @@ public class K3sPod {
         // create metadata
         V1ObjectMeta meta = new V1ObjectMeta();
         meta.setName(podName);
+        meta.setLabels(labels);
         pod.setMetadata(meta);
+
+        List<V1ContainerPort> ports = new ArrayList<>();
+        for(Integer port : this.ports){
+            ports.add(new V1ContainerPort()
+                    .containerPort(port)
+            );
+        }
 
         // create pod spec
         V1PodSpec spec = new V1PodSpec();
@@ -43,6 +51,7 @@ public class K3sPod {
                 .name(containerName)
                 .image(imageName)
                 .imagePullPolicy(imagePullPolicy)
+                .ports(ports)
         );
         pod.setSpec(spec);
 

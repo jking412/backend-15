@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 @Data
-@Component
 public class K3s {
 
     private CoreV1Api coreV1Api;
