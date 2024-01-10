@@ -9,6 +9,7 @@ import io.kubernetes.client.openapi.models.V1ServiceSpec;
 import lombok.Data;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +26,8 @@ public class K3sService {
     public static String LoadBalancer = "LoadBalancer";
 
     public K3sService(){
-
+        this.selector = new HashMap<>();
+        this.ports = new ArrayList<>();
     }
 
     public void create(CoreV1Api api,String namespace) throws ApiException {
@@ -55,5 +57,9 @@ public class K3sService {
 
         // create k3s service
         api.createNamespacedService(namespace, service, null, null, null,null);
+    }
+
+    public void delete(CoreV1Api api,String namespace) throws ApiException {
+        api.deleteNamespacedService(serviceName,namespace,null,null,null,null,null,null);
     }
 }
