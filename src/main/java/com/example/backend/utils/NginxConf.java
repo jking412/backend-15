@@ -10,18 +10,20 @@ import java.util.Map;
 public class NginxConf {
 
     // TODO: upstream template bug
-    // service_domain: service_port
-    private Map<String,Integer> upstream;
-    // service_domain: location_prefix
+    // upstreamName: serverDomain
+    private Map<String,String> upstream;
+    // upstreamName: locationPrefix
     private Map<String,String> locationPrefix;
     private File nginxConfFile;
 
     //    upstream desktop {
     //        server uos-svc:80;
     //    }
-    private static final String upstreamTemplate = "upstream desktop {\n" +
-            "%s" +
-            "}\n";
+    private static final String upstreamTemplate = """
+            upstream %s {
+                server %s;
+            }
+            """;
 
     //    server {
     //        listen 80;
@@ -41,24 +43,30 @@ public class NginxConf {
     //        }
     //
     //    }
-    private static final String serverTemplate = "server {\n" +
-            "    listen 80;\n" +
-            "%s\n" +
-            "}\n";
+    private static final String serverTemplate = """
+            server {
+                listen 80;
+            %s
+            }
+            """;
 
-    private static final String locationTemplate = "\tlocation %s {\n" +
-            "\t\tproxy_pass http://desktop/;\n" +
-            "\t\tproxy_set_header Host $http_host;\n" +
-            "\t\tproxy_set_header Accept-Encoding gzip;\n" +
-            "\t}\n";
+    private static final String locationTemplate = """
+            \tlocation %s {
+            \t\tproxy_pass http://%s/;
+            \t\tproxy_set_header Host $http_host;
+            \t\tproxy_set_header Accept-Encoding gzip;
+            \t}
+            """;
 
-    private static final String locationWebsockifyTemplate = "\tlocation %s/websockify {\n" +
-            "\t\tproxy_pass http://desktop/;\n" +
-            "\t\tproxy_http_version 1.1;\n" +
-            "\t\tproxy_set_header Upgrade $http_upgrade;\n" +
-            "\t\tproxy_set_header Connection \"Upgrade\";\n" +
-            "\t\tproxy_set_header Host $host;\n" +
-            "\t}\n";
+    private static final String locationWebsockifyTemplate = """
+            \tlocation %s/websockify {
+            \t\tproxy_pass http://%s/;
+            \t\tproxy_http_version 1.1;
+            \t\tproxy_set_header Upgrade $http_upgrade;
+            \t\tproxy_set_header Connection "Upgrade";
+            \t\tproxy_set_header Host $host;
+            \t}
+            """;
 
     public NginxConf(String nginxConfFilePath) throws IOException {
         this.nginxConfFile = new File(nginxConfFilePath);
@@ -76,30 +84,28 @@ public class NginxConf {
 
         // 写入upstream
         StringBuilder upstreamStringBuilder = new StringBuilder();
-        for(Map.Entry<String,Integer> entry: upstream.entrySet()){
-            upstreamStringBuilder.append("\tserver ").
-                    append(entry.getKey()).append(":").
-                    append(entry.getValue()).append(";\n");
+        for(Map.Entry<String,String> entry: upstream.entrySet()){
+            upstreamStringBuilder.append(String.format(upstreamTemplate,entry.getKey(),entry.getValue()));
         }
-        bufferedWriter.write(String.format(upstreamTemplate,upstreamStringBuilder.toString()));
+        bufferedWriter.write(upstreamStringBuilder.toString());
 
         // 写入server
         StringBuilder serverStringBuilder = new StringBuilder();
         for(Map.Entry<String,String> entry: locationPrefix.entrySet()){
-            serverStringBuilder.append(String.format(locationTemplate,entry.getValue()));
-            serverStringBuilder.append(String.format(locationWebsockifyTemplate,entry.getValue()));
+            serverStringBuilder.append(String.format(locationTemplate,entry.getValue(),entry.getKey()));
+            serverStringBuilder.append(String.format(locationWebsockifyTemplate,entry.getValue(),entry.getKey()));
         }
 
-        bufferedWriter.write(String.format(serverTemplate,serverStringBuilder.toString()));
+        bufferedWriter.write(String.format(serverTemplate,serverStringBuilder));
 
         bufferedWriter.close();
     }
 
-    public void addUpstream(String serverName,Integer serverPort){
-        this.upstream.put(serverName,serverPort);
+    public void addUpstream(String upstreamName,String serverDomain){
+        this.upstream.put(upstreamName,serverDomain);
     }
 
-    public void addLocationPrefix(String serverName,String locationPrefix){
-        this.locationPrefix.put(serverName,locationPrefix);
+    public void addLocationPrefix(String upstreamName,String locationPrefix){
+        this.locationPrefix.put(upstreamName,locationPrefix);
     }
 }
