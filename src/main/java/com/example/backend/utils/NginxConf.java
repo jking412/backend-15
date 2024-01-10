@@ -9,6 +9,7 @@ import java.util.Map;
 @Data
 public class NginxConf {
 
+    // TODO: upstream template bug
     // service_domain: service_port
     private Map<String,Integer> upstream;
     // service_domain: location_prefix
