@@ -1,9 +1,6 @@
 package com.example.backend;
 
-import com.example.backend.k3s.K3s;
-import com.example.backend.k3s.K3sPod;
-import com.example.backend.k3s.K3sService;
-import com.example.backend.k3s.K3sServicePort;
+import com.example.backend.k3s.*;
 import com.example.backend.utils.NginxConf;
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.openapi.ApiClient;
@@ -85,16 +82,17 @@ public class BackendApplication {
 		nginxPod.setVolumeMounts(Map.of("nginx-conf","/etc/nginx/conf.d/default.conf"));
 		nginxPod.create(k3s.getCoreV1Api(),"default");
 
-		// sleep 3 seconds for wait uos pod ready
-		Thread.sleep(3000);
+		// nginx service
+		K3sService nginxService = new K3sService();
+		nginxService.setServiceName("ngx-svc");
+		nginxService.setType(K3sService.NodePort);
+		nginxService.setSelector(nginxPod.getLabels());
+		nginxService.setPorts(List.of(new K3sServicePort(80,new IntOrString(80),"TCP")));
+		nginxService.create(k3s.getCoreV1Api(),"default");
 
-		V1PodList podList =  k3s.listPod();
-		for(V1Pod item : podList.getItems()){
-			System.out.println(item.getMetadata().getName());
-			if (item.getMetadata().getName().equals("uos")){
-				System.out.println(item.getStatus().getPodIP());
-			}
-		}
+		// ingress
+		K3sIngress ingress = new K3sIngress();
+		ingress.create(k3s.getNetworkingV1Api(),"default");
 
 	}
 

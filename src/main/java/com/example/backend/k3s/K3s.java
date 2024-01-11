@@ -4,6 +4,8 @@ import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.Configuration;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.apis.NetworkingApi;
+import io.kubernetes.client.openapi.apis.NetworkingV1Api;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.util.Config;
 import lombok.Data;
@@ -16,6 +18,7 @@ import java.io.IOException;
 public class K3s {
 
     private CoreV1Api coreV1Api;
+    private NetworkingV1Api networkingV1Api;
 
     public K3s() {
         try {
@@ -27,6 +30,7 @@ public class K3s {
         }
 
         coreV1Api = new CoreV1Api();
+        networkingV1Api = new NetworkingV1Api();
     }
 
     public V1PodList listPod() throws ApiException {
