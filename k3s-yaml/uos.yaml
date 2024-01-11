@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: uos
+  labels:
+      app: uos
+spec:
+  containers:
+    - name: uos
+      image: uos:v0.1.0
+      imagePullPolicy: IfNotPresent
+      ports:
+        - containerPort: 6080
