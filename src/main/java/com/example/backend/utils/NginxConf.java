@@ -4,12 +4,12 @@ package com.example.backend.utils;
 import lombok.Data;
 
 import java.io.*;
+import java.util.List;
 import java.util.Map;
 
 @Data
 public class NginxConf {
 
-    // TODO: upstream template bug
     // upstreamName: serverDomain
     private Map<String,String> upstream;
     // upstreamName: locationPrefix
@@ -108,4 +108,11 @@ public class NginxConf {
     public void addLocationPrefix(String upstreamName,String locationPrefix){
         this.locationPrefix.put(upstreamName,locationPrefix);
     }
+
+//    public static void reloadNginx() throws IOException, InterruptedException {
+//        List<String> command = List.of("kubectl","exec","nginx","--","nginx","-s","reload");
+//        ProcessBuilder processBuilder = new ProcessBuilder(command);
+//        Process process = processBuilder.start();
+//        process.waitFor();
+//    }
 }

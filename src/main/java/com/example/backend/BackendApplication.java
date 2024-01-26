@@ -1,6 +1,7 @@
 package com.example.backend;
 
 import com.example.backend.k3s.*;
+import com.example.backend.service.UosService;
 import com.example.backend.utils.NginxConf;
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.openapi.ApiClient;
