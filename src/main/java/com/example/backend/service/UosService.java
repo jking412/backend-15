@@ -4,13 +4,17 @@ package com.example.backend.service;
 import com.example.backend.k3s.*;
 import com.example.backend.utils.NginxConf;
 import io.kubernetes.client.custom.IntOrString;
+import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.*;
+import lombok.Data;
+import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static java.lang.Thread.sleep;
-
+@Data
+@Service
 public class UosService {
 
     private int serviceNum;
@@ -27,7 +31,8 @@ public class UosService {
 
         V1PodList podList = k3s.listPod();
         for (var item : podList.getItems()){
-            if (item.getMetadata().getName().startsWith("uos-")){
+            if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("uos-") &&
+                item.getStatus().getPhase().equals("Running")){
                 // get num
                 String podName = item.getMetadata().getName();
                 int num = Integer.parseInt(podName.substring(4));
@@ -41,7 +46,12 @@ public class UosService {
 
     }
 
-    synchronized public void create() throws Exception {
+    synchronized public int create() throws Exception {
+
+        if(existServiceNum >= 3){
+            return -1;
+        }
+
         serviceNum++;
         existServiceNum++;
         existService[existServiceNum] = serviceNum;
@@ -143,9 +153,11 @@ public class UosService {
             K3sIngress ingress = new K3sIngress();
             ingress.create(k3s.getNetworkingV1Api(),"default");
         }
+
+        return serviceNum;
     }
 
-    synchronized public void delete(int num) throws Exception {
+    synchronized public boolean delete(int num) throws Exception {
 
         boolean flag = false;
 
@@ -159,7 +171,7 @@ public class UosService {
         }
 
         if (!flag){
-            return;
+            return false;
         }
 
         // uos pod
@@ -209,6 +221,24 @@ public class UosService {
             ingress.delete(k3s.getNetworkingV1Api(),"default");
         }
 
+        return true;
+    }
 
+    public List<Integer> list() throws ApiException {
+        V1PodList podList = k3s.listPod();
+        List<Integer> list = new ArrayList<>();
+
+        // TODO: 处理正在中止的pod
+        for (var item : podList.getItems()){
+            if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("uos-") &&
+                item.getStatus().getPhase().equals("Running")){
+                // get num
+                String podName = item.getMetadata().getName();
+                int num = Integer.parseInt(podName.substring(4));
+                list.add(num);
+            }
+        }
+
+        return list;
     }
 }
