@@ -81,4 +81,42 @@ public class K3sTests {
         K3sIngress ingress = new K3sIngress();
         ingress.create(k3s.getNetworkingV1Api(),"default");
     }
+
+    @Test
+    void k3sDestroyTest() throws Exception {
+        K3s k3s = new K3s();
+        // uos pod
+        K3sPod pod = new K3sPod();
+        pod.setPodName("uos");
+        pod.delete(k3s.getCoreV1Api(),"default");
+
+        // uos pod 2
+        K3sPod pod2 = new K3sPod();
+        pod2.setPodName("uos-2");
+        pod2.delete(k3s.getCoreV1Api(),"default");
+
+        // uos service
+        K3sService service = new K3sService();
+        service.setServiceName("uos-svc");
+        service.delete(k3s.getCoreV1Api(),"default");
+
+        // uos service 2
+        K3sService service2 = new K3sService();
+        service2.setServiceName("uos-svc-2");
+        service2.delete(k3s.getCoreV1Api(),"default");
+
+        // nginx pod
+        K3sPod nginxPod = new K3sPod();
+        nginxPod.setPodName("nginx");
+        nginxPod.delete(k3s.getCoreV1Api(),"default");
+
+        // nginx service
+        K3sService nginxService = new K3sService();
+        nginxService.setServiceName("ngx-svc");
+        nginxService.delete(k3s.getCoreV1Api(),"default");
+
+        // ingress
+        K3sIngress ingress = new K3sIngress();
+        ingress.delete(k3s.getNetworkingV1Api(),"default");
+    }
 }
