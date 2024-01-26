@@ -36,9 +36,8 @@ public class K3s {
     }
 
     public V1PodList listPod() throws ApiException {
-        return coreV1Api.listPodForAllNamespaces(null, null, null,
-                null, null, null, null,
-                null, null, null);
+        return coreV1Api.listNamespacedPod("default",null,null,null,null,null,null,
+                null,null,null,null);
 
     }
 }

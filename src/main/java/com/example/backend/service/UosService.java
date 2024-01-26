@@ -32,7 +32,7 @@ public class UosService {
         V1PodList podList = k3s.listPod();
         for (var item : podList.getItems()){
             if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("uos-") &&
-                item.getStatus().getPhase().equals("Running")){
+                item.getMetadata().getDeletionTimestamp() == null){
                 // get num
                 String podName = item.getMetadata().getName();
                 int num = Integer.parseInt(podName.substring(4));
@@ -228,10 +228,9 @@ public class UosService {
         V1PodList podList = k3s.listPod();
         List<Integer> list = new ArrayList<>();
 
-        // TODO: 处理正在中止的pod
         for (var item : podList.getItems()){
             if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("uos-") &&
-                item.getStatus().getPhase().equals("Running")){
+                item.getMetadata().getDeletionTimestamp() == null){
                 // get num
                 String podName = item.getMetadata().getName();
                 int num = Integer.parseInt(podName.substring(4));
