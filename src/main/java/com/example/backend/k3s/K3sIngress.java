@@ -12,6 +12,8 @@ import java.util.List;
 public class K3sIngress {
 
     private V1Ingress ingress;
+
+    private static final String ingressName = "os-ingress";
     //    apiVersion: networking.k8s.io/v1
     //    kind: Ingress
     //    metadata:
@@ -38,7 +40,7 @@ public class K3sIngress {
         //    metadata:
         //      name: os-ingress
         V1ObjectMeta meta = new V1ObjectMeta();
-        meta.setName("os-ingress");
+        meta.setName(ingressName);
         ingress.setMetadata(meta);
 
         // spec:
@@ -89,5 +91,9 @@ public class K3sIngress {
 
     public void create(NetworkingV1Api api, String namespace) throws Exception {
         api.createNamespacedIngress(namespace,ingress,null,null,null,null);
+    }
+
+    public void delete(NetworkingV1Api api, String namespace) throws Exception {
+        api.deleteNamespacedIngress(ingressName,namespace,null,null,null,null,null,null);
     }
 }
