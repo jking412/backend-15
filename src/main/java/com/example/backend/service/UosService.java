@@ -7,6 +7,7 @@ import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.*;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -21,6 +22,9 @@ public class UosService {
     private int existServiceNum;
     private int[] existService;
     private K3s k3s;
+
+    @Value("${k3s.max-container-num}")
+    private int maxContainerNum;
 
     public UosService() throws Exception {
         k3s = new K3s();

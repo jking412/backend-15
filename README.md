@@ -12,6 +12,12 @@
 ## 快速开始
 
 ### 依赖检查
+启动该项目前需要确保系统内有以下软件或资源：
+
+1. k3s
+2. docker
+3. image: uos:v0.1.0,nginx:alpine
+4. java 17
 
 
 ### 快速部署
@@ -39,7 +45,6 @@ mvn install
 ## 如何贡献
 
 请阅读我们的[贡献指南](https://www.yuque.com/skynesser/whisrm/xgm9godof7n6z5zf)。
-
 
 
 
