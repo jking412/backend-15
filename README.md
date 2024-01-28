@@ -18,10 +18,12 @@
 2. docker 24.0.6
 3. image: uos:v0.1.0,nginx:alpine
 4. java 17
+5. k3s config
 
 
 ### 快速部署
 
+通过docker快速部署
 
 ### 构建
 
@@ -30,6 +32,8 @@
 
 ```bash
 git clne https://github.com/jking412/backend-15.git
+# 将k3s config文件放入backend-15目录下
+mv path/config backend-15/config
 ```
 
 2. 编译
