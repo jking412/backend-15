@@ -1,0 +1,8 @@
+k3s:
+  max-container-num: 3
+
+nginx:
+  conf:
+    file:
+      path: "data/nginx"
+      name: "default.conf"

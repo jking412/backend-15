@@ -7,31 +7,38 @@ import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.*;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Data
 @Service
 public class UosService {
 
-    private int serviceNum;
-    private int existServiceNum;
-    private int[] existService;
-    private K3s k3s;
+    private Set<Integer> existService;
+
+    private Lock lock;
 
     @Value("${k3s.max-container-num}")
     private int maxContainerNum;
 
-    public UosService() throws Exception {
-        k3s = new K3s();
-        serviceNum = 0;
-        existServiceNum = 0;
-        existService = new int[100];
+    private K3s k3s;
 
+    @Autowired
+    private NginxConf nginxConf;
+
+
+
+
+    public UosService() throws Exception {
+        // TODO: 注入在构造函数中的存在问题，k3s不能使用Autowired注入
+        k3s = new K3s();
+        existService = new HashSet<>();
+        lock = new ReentrantLock();
 
         V1PodList podList = k3s.listPod();
         for (var item : podList.getItems()){
@@ -40,25 +47,46 @@ public class UosService {
                 // get num
                 String podName = item.getMetadata().getName();
                 int num = Integer.parseInt(podName.substring(4));
-                existServiceNum++;
-                existService[existServiceNum] = num;
-                if (num > serviceNum){
-                    serviceNum = num;
-                }
+                existService.add(num);
             }
         }
 
     }
 
-    synchronized public int create() throws Exception {
 
-        if(existServiceNum >= 3){
+    public int create() throws Exception{
+        lock.lock();
+        try {
+            return internalCreate();
+        }finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean delete(int num) throws Exception{
+        lock.lock();
+        try {
+            return internalDelete(num);
+        }finally {
+            lock.unlock();
+        }
+    }
+
+    public int internalCreate() throws Exception {
+
+        if(existService.size() >= maxContainerNum){
             return -1;
         }
 
-        serviceNum++;
-        existServiceNum++;
-        existService[existServiceNum] = serviceNum;
+        int serviceNum;
+        // 如果没有服务，编号为1，否则编号为最大编号+1
+        if (existService.isEmpty()){
+            serviceNum = 1;
+        }else {
+            serviceNum = Collections.max(existService) + 1;
+        }
+
+        existService.add(serviceNum);
 
         // uos pod
         K3sPod pod = new K3sPod();
@@ -78,15 +106,14 @@ public class UosService {
         service.create(k3s.getCoreV1Api(),"default");
 
         // nginx conf
-        NginxConf nginxConf = new NginxConf("data/nginx/default.conf");
-        for (int i = 1; i <= existServiceNum; i++){
-            nginxConf.addUpstream(String.format("desktop-%d",existService[i]),String.format("uos-svc-%d:80",existService[i]));
-            nginxConf.addLocationPrefix(String.format("desktop-%d",existService[i]),String.format("/env/%d",existService[i]));
+        for (int num : existService){
+            nginxConf.addUpstream(String.format("desktop-%d",num),String.format("uos-svc-%d:80",num));
+            nginxConf.addLocationPrefix(String.format("desktop-%d",num),String.format("/env/%d",num));
         }
         nginxConf.writeToNginxConfFile();
 
         // delete nginx pod to reload nginx conf
-        if (existServiceNum > 1){
+        if (existService.size() > 1){
             V1PodList podList = k3s.listPod();
             for (var item : podList.getItems()){
                 if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("ngx")){
@@ -98,7 +125,7 @@ public class UosService {
             }
         }
 
-        if (existServiceNum == 1){
+        if (existService.size() == 1){
 
             // nginx pod
 //            K3sPod nginxPod = new K3sPod();
@@ -161,22 +188,13 @@ public class UosService {
         return serviceNum;
     }
 
-    synchronized public boolean delete(int num) throws Exception {
+    public boolean internalDelete(int num) throws Exception {
 
-        boolean flag = false;
-
-        for (int i = 1; i <= existServiceNum; i++){
-            if (existService[i] == num){
-                existService[i] = existService[existServiceNum];
-                existServiceNum--;
-                flag = true;
-                break;
-            }
-        }
-
-        if (!flag){
+        if (!existService.contains(num)){
             return false;
         }
+
+        existService.remove(num);
 
         // uos pod
         K3sPod pod = new K3sPod();
@@ -184,20 +202,16 @@ public class UosService {
         pod.delete(k3s.getCoreV1Api(),"default");
 
         // uos service
-        com.example.backend.k3s.K3sService service = new com.example.backend.k3s.K3sService();
+        K3sService service = new K3sService();
         service.setServiceName(String.format("uos-svc-%d",num));
         service.delete(k3s.getCoreV1Api(),"default");
 
-        // nginx conf
-        NginxConf nginxConf = new NginxConf("data/nginx/default.conf");
-        for (int i = 1; i <= existServiceNum; i++){
-            nginxConf.addUpstream(String.format("desktop-%d",existService[i]),String.format("uos-svc-%d:80",existService[i]));
-            nginxConf.addLocationPrefix(String.format("desktop-%d",existService[i]),String.format("/env/%d",existService[i]));
-        }
-        nginxConf.writeToNginxConfFile();
+        // 删除pod时conf只需要删除upstream和location，但是不需要更改文件
+        nginxConf.deleteUpstream(String.format("desktop-%d",num));
+        nginxConf.deleteLocationPrefix(String.format("desktop-%d",num));
 
         // delete nginx pod to reload nginx conf
-        if (existServiceNum > 1){
+        if (existService.size() > 1){
             V1PodList podList = k3s.listPod();
             for (var item : podList.getItems()){
                 if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("ngx")){
@@ -209,7 +223,7 @@ public class UosService {
             }
         }
 
-        if (existServiceNum == 0){
+        if (existService.size() == 0){
             // nginx pod
             K3sDeployment nginxDeployment = new K3sDeployment();
             nginxDeployment.setDeploymentName("ngx-dep");
