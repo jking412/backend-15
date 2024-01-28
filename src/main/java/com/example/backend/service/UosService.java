@@ -26,35 +26,41 @@ public class UosService {
     @Value("${k3s.max-container-num}")
     private int maxContainerNum;
 
+    @Autowired
     private K3s k3s;
 
     @Autowired
     private NginxConf nginxConf;
+
+    // TODO: 为了检查是否初始化，这里使用了一个flag，但是这样的实现方式不太好
+    private boolean initFlag = false;
 
 
 
 
     public UosService() throws Exception {
         // TODO: 注入在构造函数中的存在问题，k3s不能使用Autowired注入
-        k3s = new K3s();
         existService = new HashSet<>();
         lock = new ReentrantLock();
+    }
 
+    private void init() throws Exception {
         V1PodList podList = k3s.listPod();
         for (var item : podList.getItems()){
             if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("uos-") &&
-                item.getMetadata().getDeletionTimestamp() == null){
+                    item.getMetadata().getDeletionTimestamp() == null){
                 // get num
                 String podName = item.getMetadata().getName();
                 int num = Integer.parseInt(podName.substring(4));
                 existService.add(num);
             }
         }
-
     }
-
-
     public int create() throws Exception{
+        if (!initFlag){
+            init();
+            initFlag = true;
+        }
         lock.lock();
         try {
             return internalCreate();
@@ -64,6 +70,10 @@ public class UosService {
     }
 
     public boolean delete(int num) throws Exception{
+        if (!initFlag){
+            init();
+            initFlag = true;
+        }
         lock.lock();
         try {
             return internalDelete(num);
@@ -72,7 +82,7 @@ public class UosService {
         }
     }
 
-    public int internalCreate() throws Exception {
+    private int internalCreate() throws Exception {
 
         if(existService.size() >= maxContainerNum){
             return -1;
@@ -188,7 +198,7 @@ public class UosService {
         return serviceNum;
     }
 
-    public boolean internalDelete(int num) throws Exception {
+    private boolean internalDelete(int num) throws Exception {
 
         if (!existService.contains(num)){
             return false;
