@@ -14,8 +14,8 @@
 ### 依赖检查
 启动该项目前需要确保系统内有以下软件或资源：
 
-1. k3s
-2. docker
+1. k3s 1.27.7+k3s2
+2. docker 24.0.6
 3. image: uos:v0.1.0,nginx:alpine
 4. java 17
 

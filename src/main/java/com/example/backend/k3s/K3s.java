@@ -27,7 +27,7 @@ public class K3s {
         ApiClient client = null;
 
         try {
-            client = Config.fromConfig("/home/jking/.kube/config");
+            client = Config.fromConfig("config");
         }catch (IOException e){
             try{
                 client = Config.fromCluster();
