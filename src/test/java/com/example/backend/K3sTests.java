@@ -51,7 +51,7 @@ public class K3sTests {
         service2.create(k3s.getCoreV1Api(),"default");
 
         // nginx conf
-        NginxConf nginxConf = new NginxConf("data/nginx/default.conf");
+        NginxConf nginxConf = new NginxConf();
         nginxConf.addUpstream("desktop","uos-svc:80");
         nginxConf.addLocationPrefix("desktop","/env/1");
         nginxConf.addUpstream("desktop-2","uos-svc-2:80");

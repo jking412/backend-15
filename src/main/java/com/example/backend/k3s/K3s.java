@@ -16,19 +16,29 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 @Data
+@Component
 public class K3s {
 
     private CoreV1Api coreV1Api;
     private NetworkingV1Api networkingV1Api;
     private AppsV1Api appsV1Api;
     public K3s() {
+
+        ApiClient client = null;
+
         try {
-            ApiClient client = Config.fromConfig("/home/jking/.kube/config");
-            Configuration.setDefaultApiClient(client);
+            client = Config.fromConfig("config");
         }catch (IOException e){
-            System.out.println("kube config read error");
+            try{
+                client = Config.fromCluster();
+            } catch (IOException e1) {
+                throw new RuntimeException(e1);
+            }
             return;
         }
+
+        Configuration.setDefaultApiClient(client);
+
 
         coreV1Api = new CoreV1Api();
         networkingV1Api = new NetworkingV1Api();

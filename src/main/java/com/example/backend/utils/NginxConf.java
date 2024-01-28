@@ -2,12 +2,15 @@ package com.example.backend.utils;
 
 
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.util.List;
 import java.util.Map;
 
 @Data
+@Component
 public class NginxConf {
 
     // upstreamName: serverDomain
@@ -16,69 +19,73 @@ public class NginxConf {
     private Map<String,String> locationPrefix;
     private File nginxConfFile;
 
-    //    upstream desktop {
-    //        server uos-svc:80;
-    //    }
-    private static final String upstreamTemplate = """
-            upstream %s {
-                server %s;
-            }
-            """;
+//    private String upstreamTemplate = """
+//            upstream %s {
+//                server %s;
+//            }
+//            """;
+//
+//    private String serverTemplate = """
+//            server {
+//                listen 80;
+//            %s
+//            }
+//            """;
+//
+//    private String locationTemplate = """
+//            \tlocation %s {
+//            \t\tproxy_pass http://%s/;
+//            \t\tproxy_set_header Host $http_host;
+//            \t\tproxy_set_header Accept-Encoding gzip;
+//            \t}
+//            """;
+//
+//    private String locationWebsockifyTemplate = """
+//            \tlocation %s/websockify {
+//            \t\tproxy_pass http://%s/;
+//            \t\tproxy_http_version 1.1;
+//            \t\tproxy_set_header Upgrade $http_upgrade;
+//            \t\tproxy_set_header Connection "Upgrade";
+//            \t\tproxy_set_header Host $host;
+//            \t}
+//            """;
 
-    //    server {
-    //        listen 80;
-    //        location /env/1/ {
-    //        proxy_pass http://desktop/;
-    //        proxy_set_header Host $http_host;
-    //        proxy_set_header Accept-Encoding gzip;
-    //    }
-    //
-    //
-    //        location /env/1/websockify {
-    //            proxy_pass http://desktop/;
-    //            proxy_http_version 1.1;
-    //            proxy_set_header Upgrade $http_upgrade;
-    //            proxy_set_header Connection "Upgrade";
-    //            proxy_set_header Host $host;
-    //        }
-    //
-    //    }
-    private static final String serverTemplate = """
-            server {
-                listen 80;
-            %s
-            }
-            """;
+    @Value("${nginx.template.upstream}")
+    private String upstreamTemplate;
 
-    private static final String locationTemplate = """
-            \tlocation %s {
-            \t\tproxy_pass http://%s/;
-            \t\tproxy_set_header Host $http_host;
-            \t\tproxy_set_header Accept-Encoding gzip;
-            \t}
-            """;
+    @Value("${nginx.template.server}")
+    private String serverTemplate;
 
-    private static final String locationWebsockifyTemplate = """
-            \tlocation %s/websockify {
-            \t\tproxy_pass http://%s/;
-            \t\tproxy_http_version 1.1;
-            \t\tproxy_set_header Upgrade $http_upgrade;
-            \t\tproxy_set_header Connection "Upgrade";
-            \t\tproxy_set_header Host $host;
-            \t}
-            """;
+    @Value("${nginx.template.location}")
+    private String locationTemplate;
 
-    public NginxConf(String nginxConfFilePath) throws IOException {
-        this.nginxConfFile = new File(nginxConfFilePath);
-        if(!nginxConfFile.exists()){
-            throw new IOException("nginx conf file not exists");
-        }
+    @Value("${nginx.template.location-websockify}")
+    private String locationWebsockifyTemplate;
 
+    @Value("${nginx.conf.file.path}")
+    private String nginxFilePath;
+
+    @Value("${nginx.conf.file.name}")
+    private String nginxFileName;
+
+    public NginxConf(){
         upstream = new java.util.HashMap<>();
         locationPrefix = new java.util.HashMap<>();
     }
 
     public void writeToNginxConfFile() throws IOException {
+        // 检查path是否存在
+        File nginxFilePathFile = new File(nginxFilePath);
+        if (!nginxFilePathFile.exists()){
+            nginxFilePathFile.mkdirs();
+        }
+
+        // 检查file是否存在
+        nginxConfFile = new File(nginxFilePathFile,nginxFileName);
+        if (!nginxConfFile.exists()){
+            nginxConfFile.createNewFile();
+        }
+
         // 下面代码默认情况为截断写入
         BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(nginxConfFile));
 
@@ -107,6 +114,14 @@ public class NginxConf {
 
     public void addLocationPrefix(String upstreamName,String locationPrefix){
         this.locationPrefix.put(upstreamName,locationPrefix);
+    }
+
+    public void deleteUpstream(String upstreamName){
+        this.upstream.remove(upstreamName);
+    }
+
+    public void deleteLocationPrefix(String upstreamName){
+        this.locationPrefix.remove(upstreamName);
     }
 
 //    public static void reloadNginx() throws IOException, InterruptedException {
