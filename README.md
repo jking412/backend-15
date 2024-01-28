@@ -12,18 +12,14 @@
 ## 快速开始
 
 ### 依赖检查
-启动该项目前需要确保系统内有以下软件或资源：
+如果需要在本机上完全独立的启动该项目，需要确保系统内有以下软件或资源：
 
 1. k3s 1.27.7+k3s2
 2. docker 24.0.6
-3. image: uos:v0.1.0,nginx:alpine
-4. java 17
-5. k3s config
-
-
-### 快速部署
-
-通过docker快速部署
+3. image: uos:v0.1.0
+4. nginx:alpine
+5. java 17
+6. k3s config
 
 ### 构建
 
@@ -42,6 +38,15 @@ cd backend-15
 mvn install
 ```
 
+### 快速部署
+
+1. 下载Jar包
+2. 将config文件放在jar包目录下
+3. 启动运行
+
+```bash
+java -jar XXX.jar
+```
 
 ## 使用指南
 
