@@ -1,5 +1,5 @@
 k3s:
-  max-container-num: 3
+  max-container-num: 10
 
 nginx:
   conf:

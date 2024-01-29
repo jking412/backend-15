@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -45,6 +46,22 @@ public class UosService {
     }
 
     private void init() throws Exception {
+
+        // 读取环境变量MAX_CONTAINER_NUM
+        String maxContainerNum1 = System.getenv("MAX_CONTAINER_NUM");
+        if (maxContainerNum1 != null){
+            // 解析如果没有异常，就使用环境变量的值
+            // 如果有异常，就使用配置文件中的值
+            boolean flag = true;
+            int tempNum = 0;
+            try {
+                tempNum = Integer.parseInt(maxContainerNum1);
+            }catch(NumberFormatException e){
+                flag = false;
+            }
+            if(flag) maxContainerNum = tempNum;
+        }
+
         V1PodList podList = k3s.listPod();
         for (var item : podList.getItems()){
             if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("uos-") &&
