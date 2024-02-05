@@ -39,7 +39,6 @@ public class K3s {
 
         Configuration.setDefaultApiClient(client);
 
-
         coreV1Api = new CoreV1Api();
         networkingV1Api = new NetworkingV1Api();
         appsV1Api = new AppsV1Api();
