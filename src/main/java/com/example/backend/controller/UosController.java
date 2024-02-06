@@ -44,7 +44,7 @@ public class UosController {
     }
 
     @GetMapping("/deleteAll")
-    public Map<Object,Object> deleteAll() throws Exception {
+    public Map<Object,Object> deleteAll() throws Exception {    
         List<Integer> list = uosService.list();
         for(int i = 0 ; i < list.size() ; i++){
             boolean res = uosService.delete(list.get(i).intValue());
