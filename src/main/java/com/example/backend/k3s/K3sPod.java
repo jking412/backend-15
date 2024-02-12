@@ -7,6 +7,7 @@ import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +39,53 @@ public class K3sPod {
         this.labels = new HashMap<>();
         this.volumes = new HashMap<>();
         this.volumeMounts = new HashMap<>();
+
+    }
+
+    public K3sPod(V1Pod v1pod){
+
+        V1Container v1podContainer = v1pod.getSpec().getContainers().get(0);
+        podId = Integer.parseInt(v1podContainer.getName().substring(4));
+        podName = v1pod.getMetadata().getName();
+
+        V1ResourceRequirements resources = v1podContainer.getResources();
+        for(Map.Entry<String, Quantity> entry : resources.getRequests().entrySet()){
+            if (entry.getKey().equals("cpu")){
+                cpuReq = entry.getValue().getNumber().intValue();
+            }
+            if (entry.getKey().equals("memory")){
+                memoryReq = entry.getValue().getNumber().divide(new BigDecimal(1024*1024)).intValue();
+            }
+        }
+
+        for(Map.Entry<String, Quantity> entry : resources.getLimits().entrySet()){
+            if (entry.getKey().equals("cpu")){
+                cpuLimit = entry.getValue().getNumber().intValue();
+            }
+            if (entry.getKey().equals("memory")){
+                memoryLimit = entry.getValue().getNumber().divide(new BigDecimal(1024*1024)).intValue();
+            }
+        }
+
+        containerName = v1podContainer.getName();
+        imageName = v1podContainer.getImage();
+        imagePullPolicy = v1podContainer.getImagePullPolicy();
+
+//        labels = v1pod.getMetadata().getLabels();
+//        ports = new ArrayList<>();
+//        for(V1ContainerPort port : v1podContainer.getPorts()){
+//            ports.add(port.getContainerPort());
+//        }
+//
+//        volumes = new HashMap<>();
+//        volumeMounts = new HashMap<>();
+//        for(V1Volume volume : v1pod.getSpec().getVolumes()){
+//            volumes.put(volume.getName(),volume.getHostPath().getPath());
+//        }
+//
+//        for(V1VolumeMount volumeMount : v1podContainer.getVolumeMounts()){
+//            volumeMounts.put(volumeMount.getName(),volumeMount.getMountPath());
+//        }
 
     }
 
@@ -138,4 +186,5 @@ public class K3sPod {
     public void delete(CoreV1Api api,String namespace) throws ApiException {
         api.deleteNamespacedPod(podName,namespace,null,null,null,null,null,null);
     }
+
 }

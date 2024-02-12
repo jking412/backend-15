@@ -1,7 +1,10 @@
 package com.example.backend.service;
 
+import com.example.backend.k3s.K3sPod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class ContainerService {
@@ -19,11 +22,15 @@ public class ContainerService {
         return -1;
     }
 
-    public void delete(String imageName,int num) throws Exception{
+    public boolean delete(String imageName,int num) throws Exception{
         if (imageName.equals(uosImage)){
-            uosService.delete(num);
+            return uosService.delete(num);
         }
+        return false;
     }
 
+    public List<K3sPod> list() throws Exception{
+        return uosService.list();
+    }
 
 }

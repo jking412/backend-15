@@ -318,14 +318,14 @@ public class UosService {
 //                list.add(num);
 //            }
 
-            K3sPod pod = new K3sPod();
             String containerName = item.getSpec().getContainers().get(0).getName();
             if (containerName != null && containerName.startsWith("uos-") &&
                     item.getMetadata().getDeletionTimestamp() == null){
-                int num = Integer.parseInt(containerName.substring(4));
-                pod.setPodId(num);
-                String podName = item.getMetadata().getName();
-                pod.setPodName(podName);
+//                int num = Integer.parseInt(containerName.substring(4));
+//                pod.setPodId(num);
+//                String podName = item.getMetadata().getName();
+//                pod.setPodName(podName);
+                K3sPod pod = new K3sPod(item);
                 list.add(pod);
             }
         }
