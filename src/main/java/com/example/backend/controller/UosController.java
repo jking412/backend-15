@@ -21,7 +21,7 @@ public class UosController {
 
     @GetMapping("/create")
     public Map<Object,Object> create() throws Exception {
-        int res = uosService.create();
+        int res = uosService.create("uos", "uos", 1, 1, 1024, 1024);
         if (res == -1){
             return Map.of("code",500,"msg","创建失败，已达到最大数量");
         }

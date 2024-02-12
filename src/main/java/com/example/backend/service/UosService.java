@@ -64,23 +64,29 @@ public class UosService {
 
         V1PodList podList = k3s.listPod();
         for (var item : podList.getItems()){
-            if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("uos-") &&
-                    item.getMetadata().getDeletionTimestamp() == null){
-                // get num
+//            if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("uos-") &&
+//                    item.getMetadata().getDeletionTimestamp() == null){
+//                // get num
+//                String podName = item.getMetadata().getName();
+//                int num = Integer.parseInt(podName.substring(4));
+//                existService.add(num);
+//            }
+            String containerName = item.getSpec().getContainers().get(0).getName();
+            if (containerName != null && containerName.startsWith("uos-")){
                 String podName = item.getMetadata().getName();
                 int num = Integer.parseInt(podName.substring(4));
                 existService.add(num);
             }
         }
     }
-    public int create() throws Exception{
+    public int create(String containerName,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit) throws Exception {
         if (!initFlag){
             init();
             initFlag = true;
         }
         lock.lock();
         try {
-            return internalCreate();
+            return internalCreate(containerName,hostName,cpuReq,cpuLimit,memoryReq,memoryLimit);
         }finally {
             lock.unlock();
         }
@@ -99,7 +105,7 @@ public class UosService {
         }
     }
 
-    private int internalCreate() throws Exception {
+    private int internalCreate(String containerName,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit) throws Exception {
 
         if(existService.size() >= maxContainerNum){
             return -1;
@@ -274,9 +280,15 @@ public class UosService {
         List<Integer> list = new ArrayList<>();
 
         for (var item : podList.getItems()){
-            if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("uos-") &&
-                item.getMetadata().getDeletionTimestamp() == null){
-                // get num
+//            if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("uos-") &&
+//                item.getMetadata().getDeletionTimestamp() == null){
+//                // get num
+//                String podName = item.getMetadata().getName();
+//                int num = Integer.parseInt(podName.substring(4));
+//                list.add(num);
+//            }
+            String containerName = item.getSpec().getContainers().get(0).getName();
+            if (containerName != null && containerName.startsWith("uos-")){
                 String podName = item.getMetadata().getName();
                 int num = Integer.parseInt(podName.substring(4));
                 list.add(num);
