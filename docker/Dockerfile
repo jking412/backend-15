@@ -4,7 +4,7 @@ LABEL authors="jking"
 # 下载依赖
 # 因为下载依赖的过程中会出现unix syslog delivery error的问题，不影响使用，所以这里先忽略错误
 RUN apt-get update && \
-    apt-get install -y xfce4 tigervnc-standalone-server novnc websockify nginx || true
+    apt-get install -y xfce4 tigervnc-standalone-server novnc websockify || true
 
 
 # 配置桌面环境

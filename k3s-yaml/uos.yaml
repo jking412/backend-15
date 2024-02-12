@@ -7,7 +7,12 @@ metadata:
 spec:
   containers:
     - name: uos
-      image: uos:v0.1.0
+      image: uos:v0.2.0
       imagePullPolicy: IfNotPresent
       ports:
         - containerPort: 6080
+      env:
+        - name: VNC_PW
+          value: "12345678"
+
+
