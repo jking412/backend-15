@@ -9,7 +9,7 @@ public class ContainerService {
     @Autowired
     UosService uosService;
 
-    public void create(String containerName,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit){
+    public void create(String podName,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit){
 
     }
 }

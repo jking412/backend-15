@@ -72,21 +72,21 @@ public class UosService {
 //                existService.add(num);
 //            }
             String containerName = item.getSpec().getContainers().get(0).getName();
-            if (containerName != null && containerName.startsWith("uos-")){
-                String podName = item.getMetadata().getName();
-                int num = Integer.parseInt(podName.substring(4));
+            if (containerName != null && containerName.startsWith("uos-")
+                    && item.getMetadata().getDeletionTimestamp() == null){
+                int num = Integer.parseInt(containerName.substring(4));
                 existService.add(num);
             }
         }
     }
-    public int create(String containerName,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit) throws Exception {
+    public int create(String podName,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit) throws Exception {
         if (!initFlag){
             init();
             initFlag = true;
         }
         lock.lock();
         try {
-            return internalCreate(containerName,hostName,cpuReq,cpuLimit,memoryReq,memoryLimit);
+            return internalCreate(podName,hostName,cpuReq,cpuLimit,memoryReq,memoryLimit);
         }finally {
             lock.unlock();
         }
@@ -105,7 +105,7 @@ public class UosService {
         }
     }
 
-    private int internalCreate(String containerName,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit) throws Exception {
+    private int internalCreate(String podName,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit) throws Exception {
 
         if(existService.size() >= maxContainerNum){
             return -1;
@@ -114,21 +114,35 @@ public class UosService {
         int serviceNum;
         // 如果没有服务，编号为1，否则编号为最大编号+1
         if (existService.isEmpty()){
-            serviceNum = 1;
+            serviceNum = new Random().nextInt(100);
         }else {
-            serviceNum = Collections.max(existService) + 1;
+            int maxExistService = Collections.max(existService);
+            serviceNum = new Random().nextInt(maxExistService + 100);
+            // random 一个 不在existService中的编号
+            while (existService.contains(serviceNum)){
+                serviceNum = new Random().nextInt(maxExistService + 100);
+            }
         }
 
-        existService.add(serviceNum);
 
         // uos pod
         K3sPod pod = new K3sPod();
-        pod.setPodName(String.format("uos-%d",serviceNum));
+
+        // 如果containerName不为空，就使用containerName，否则使用uos-编号
+        if (podName != null && !podName.equals("")){
+            pod.setPodName(podName);
+        }else {
+            pod.setPodName(String.format("uos-%d",serviceNum));
+        }
+
         pod.setContainerName(String.format("uos-%d",serviceNum));
         pod.setImageName("uos:v0.1.0");
         pod.setLabels(Map.of("app",String.format("uos-%d",serviceNum)));
         pod.setPorts(List.of(6080));
         pod.create(k3s.getCoreV1Api(),"default");
+
+        // 在pod创建后，将编号加入existService
+        existService.add(serviceNum);
 
         // uos service
         com.example.backend.k3s.K3sService service = new com.example.backend.k3s.K3sService();
@@ -227,12 +241,21 @@ public class UosService {
             return false;
         }
 
-        existService.remove(num);
-
         // uos pod
         K3sPod pod = new K3sPod();
-        pod.setPodName(String.format("uos-%d",num));
+        // 通过num获取podName
+        List<K3sPod> list = list();
+        for (var item : list){
+            if (item.getPodId() == num){
+                pod.setPodName(item.getPodName());
+                break;
+            }
+        }
         pod.delete(k3s.getCoreV1Api(),"default");
+
+        // 在pod删除后，从existService中删除
+        existService.remove(num);
+
 
         // uos service
         K3sService service = new K3sService();
@@ -256,7 +279,7 @@ public class UosService {
             }
         }
 
-        if (existService.size() == 0){
+        if (existService.isEmpty()){
             // nginx pod
             K3sDeployment nginxDeployment = new K3sDeployment();
             nginxDeployment.setDeploymentName("ngx-dep");
@@ -275,9 +298,9 @@ public class UosService {
         return true;
     }
 
-    public List<Integer> list() throws ApiException {
+    public List<K3sPod> list() throws ApiException {
         V1PodList podList = k3s.listPod();
-        List<Integer> list = new ArrayList<>();
+        List<K3sPod> list = new ArrayList<>();
 
         for (var item : podList.getItems()){
 //            if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("uos-") &&
@@ -287,11 +310,16 @@ public class UosService {
 //                int num = Integer.parseInt(podName.substring(4));
 //                list.add(num);
 //            }
+
+            K3sPod pod = new K3sPod();
             String containerName = item.getSpec().getContainers().get(0).getName();
-            if (containerName != null && containerName.startsWith("uos-")){
+            if (containerName != null && containerName.startsWith("uos-") &&
+                    item.getMetadata().getDeletionTimestamp() == null){
+                int num = Integer.parseInt(containerName.substring(4));
+                pod.setPodId(num);
                 String podName = item.getMetadata().getName();
-                int num = Integer.parseInt(podName.substring(4));
-                list.add(num);
+                pod.setPodName(podName);
+                list.add(pod);
             }
         }
 

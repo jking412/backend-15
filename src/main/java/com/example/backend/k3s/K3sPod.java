@@ -13,6 +13,12 @@ import java.util.Map;
 
 @Data
 public class K3sPod {
+
+    private int podId;
+    private int cpuReq;
+    private int cpuLimit;
+    private int memoryReq;
+    private int memoryLimit;
     private String podName;
     private String containerName;
     private String imageName;

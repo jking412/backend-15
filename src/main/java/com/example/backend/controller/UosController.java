@@ -1,5 +1,7 @@
 package com.example.backend.controller;
 
+import com.example.backend.k3s.K3s;
+import com.example.backend.k3s.K3sPod;
 import com.example.backend.service.UosService;
 import com.google.protobuf.Api;
 import io.kubernetes.client.openapi.ApiException;
@@ -21,7 +23,7 @@ public class UosController {
 
     @GetMapping("/create")
     public Map<Object,Object> create() throws Exception {
-        int res = uosService.create("uos", "uos", 1, 1, 1024, 1024);
+        int res = uosService.create("", "uos", 1, 1, 1024, 1024);
         if (res == -1){
             return Map.of("code",500,"msg","创建失败，已达到最大数量");
         }
@@ -45,9 +47,9 @@ public class UosController {
 
     @GetMapping("/deleteAll")
     public Map<Object,Object> deleteAll() throws Exception {    
-        List<Integer> list = uosService.list();
+        List< K3sPod > list = uosService.list();
         for(int i = 0 ; i < list.size() ; i++){
-            boolean res = uosService.delete(list.get(i).intValue());
+            boolean res = uosService.delete(list.get(i).getPodId());
             if(!res){
                 return Map.of("code",500,"msg","删除失败");
             }
