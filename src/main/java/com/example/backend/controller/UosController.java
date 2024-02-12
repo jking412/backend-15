@@ -6,10 +6,7 @@ import com.example.backend.service.UosService;
 import com.google.protobuf.Api;
 import io.kubernetes.client.openapi.ApiException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -21,9 +18,11 @@ public class UosController {
     @Autowired
     private UosService uosService;
 
+
     @GetMapping("/create")
-    public Map<Object,Object> create() throws Exception {
-        int res = uosService.create("", "uos", 1, 1, 1024, 1024);
+    // 获取body中的podName）
+    public Map<Object,Object> create(@RequestBody Map<String, String> body) throws Exception {
+        int res = uosService.create(body.get("name"), "uos", 1, 1, 1024, 1024);
         if (res == -1){
             return Map.of("code",500,"msg","创建失败，已达到最大数量");
         }

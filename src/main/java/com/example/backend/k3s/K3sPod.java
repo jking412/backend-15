@@ -1,6 +1,7 @@
 package com.example.backend.k3s;
 
 
+import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.*;
@@ -67,6 +68,34 @@ public class K3sPod {
         container.setImage(imageName);
         container.setImagePullPolicy(imagePullPolicy);
         container.setPorts(ports);
+
+        // create resource requirements
+        V1ResourceRequirements requirements = new V1ResourceRequirements();
+        if (cpuReq != 0 || memoryReq != 0){
+            Map<String, Quantity> requests = new HashMap<>();
+            if (cpuReq != 0){
+                requests.put("cpu",new Quantity(String.format("%d",cpuReq)));
+            }
+            if (memoryReq != 0){
+                requests.put("memory",new Quantity(String.format("%dMi",memoryReq)));
+            }
+            requirements.setRequests(requests);
+        }
+
+        // create resource limits
+        if (cpuLimit != 0 || memoryLimit != 0){
+            Map<String, Quantity> limits = new HashMap<>();
+            if (cpuLimit != 0){
+                limits.put("cpu",new Quantity(String.format("%d",cpuLimit)));
+            }
+            if (memoryLimit != 0){
+                limits.put("memory",new Quantity(String.format("%dMi",memoryLimit)));
+            }
+            requirements.setLimits(limits);
+        }
+
+        container.setResources(requirements);
+
 
         // create volume mounts
         if (volumeMounts != null){

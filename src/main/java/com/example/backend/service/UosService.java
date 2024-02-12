@@ -139,15 +139,21 @@ public class UosService {
         pod.setImageName("uos:v0.1.0");
         pod.setLabels(Map.of("app",String.format("uos-%d",serviceNum)));
         pod.setPorts(List.of(6080));
+
+        // 设置资源
+        pod.setCpuReq(cpuReq);
+        pod.setCpuLimit(cpuLimit);
+        pod.setMemoryReq(memoryReq);
+        pod.setMemoryLimit(memoryLimit);
+
         pod.create(k3s.getCoreV1Api(),"default");
 
         // 在pod创建后，将编号加入existService
         existService.add(serviceNum);
 
         // uos service
-        com.example.backend.k3s.K3sService service = new com.example.backend.k3s.K3sService();
+        K3sService service = new K3sService();
         service.setServiceName(String.format("uos-svc-%d",serviceNum));
-        service.setType(com.example.backend.k3s.K3sService.NodePort);
         service.setSelector(pod.getLabels());
         service.setPorts(List.of(new K3sServicePort(80,new IntOrString(6080),"TCP")));
         service.create(k3s.getCoreV1Api(),"default");
@@ -209,6 +215,8 @@ public class UosService {
                             .mountPath("/etc/nginx/conf.d/default.conf")
                     ))
             ));
+
+            // TODO: path需要修改为可动态配置
             podSpec.setVolumes(List.of(new V1Volume()
                     .name("nginx-conf")
                     .hostPath(new V1HostPathVolumeSource()
@@ -222,7 +230,6 @@ public class UosService {
             // nginx service
             K3sService nginxService = new K3sService();
             nginxService.setServiceName("ngx-svc");
-            nginxService.setType(com.example.backend.k3s.K3sService.NodePort);
             nginxService.setSelector(Map.of("app","ngx"));
             nginxService.setPorts(List.of(new K3sServicePort(80,new IntOrString(80),"TCP")));
             nginxService.create(k3s.getCoreV1Api(),"default");
