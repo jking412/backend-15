@@ -256,12 +256,13 @@ public class UosService {
         // 通过num获取podName
         List<K3sPod> list = list();
         for (var item : list){
-            if (item.getPodId() == num){
+            if (item.getPodId() == num) {
                 pod.setPodName(item.getPodName());
                 break;
             }
         }
-        pod.delete(k3s.getCoreV1Api(),"default");
+        // deleteForce 会保证pod在3s内被删除
+        pod.deleteForce(k3s.getCoreV1Api(),"default",3);
 
         // 在pod删除后，从existService中删除
         existService.remove(num);

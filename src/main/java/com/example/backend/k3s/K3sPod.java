@@ -217,4 +217,9 @@ public class K3sPod {
         api.deleteNamespacedPod(podName,namespace,null,null,null,null,null,null);
     }
 
+    // pod 会在gracePeriodSeconds后被强制删除
+    public void deleteForce(CoreV1Api api,String namespace,Integer gracePeriodSeconds) throws ApiException {
+        api.deleteNamespacedPod(podName,namespace,null,null,gracePeriodSeconds,null,null,null);
+    }
+
 }
