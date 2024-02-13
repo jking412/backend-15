@@ -79,14 +79,14 @@ public class UosService {
             }
         }
     }
-    public int create(String podName,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit) throws Exception {
+    public int create(K3sPod pod) throws Exception {
         if (!initFlag){
             init();
             initFlag = true;
         }
         lock.lock();
         try {
-            return internalCreate(podName,hostName,cpuReq,cpuLimit,memoryReq,memoryLimit);
+            return internalCreate(pod);
         }finally {
             lock.unlock();
         }
@@ -105,7 +105,7 @@ public class UosService {
         }
     }
 
-    private int internalCreate(String podName,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit) throws Exception {
+    private int internalCreate(K3sPod k3sPod) throws Exception {
 
         if(existService.size() >= maxContainerNum){
             return -1;
@@ -129,22 +129,25 @@ public class UosService {
         K3sPod pod = new K3sPod();
 
         // 如果containerName不为空，就使用containerName，否则使用uos-编号
-        if (podName != null && !podName.equals("")){
-            pod.setPodName(podName);
+        if (k3sPod.getPodName() != null && !k3sPod.getPodName().equals("")){
+            pod.setPodName(k3sPod.getPodName());
         }else {
             pod.setPodName(String.format("uos-%d",serviceNum));
         }
 
         pod.setContainerName(String.format("uos-%d",serviceNum));
-        pod.setImageName("uos:v0.1.0");
+        pod.setImageName("uos:v0.2.0");
         pod.setLabels(Map.of("app",String.format("uos-%d",serviceNum)));
         pod.setPorts(List.of(6080));
 
         // 设置资源
-        pod.setCpuReq(cpuReq);
-        pod.setCpuLimit(cpuLimit);
-        pod.setMemoryReq(memoryReq);
-        pod.setMemoryLimit(memoryLimit);
+        pod.setCpuReq(k3sPod.getCpuReq());
+        pod.setCpuLimit(k3sPod.getCpuLimit());
+        pod.setMemoryReq(k3sPod.getMemoryReq());
+        pod.setMemoryLimit(k3sPod.getMemoryLimit());
+
+        // 设置密码
+        pod.setPasswd(k3sPod.getPasswd());
 
         pod.create(k3s.getCoreV1Api(),"default");
 

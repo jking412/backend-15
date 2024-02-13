@@ -21,7 +21,9 @@ public class K3sPod {
     private int cpuLimit;
     private int memoryReq;
     private int memoryLimit;
+    private String passwd;
     private String podName;
+    private String hostName;
     private String containerName;
     private String imageName;
     private String imagePullPolicy;
@@ -89,6 +91,24 @@ public class K3sPod {
 
     }
 
+    public K3sPod(V1Pod v1pod,String passwd){
+        this(v1pod);
+        this.passwd = passwd;
+    }
+
+    // String imageName,String podName,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit
+    public K3sPod(String imageName,String podName,String passwd,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit){
+        this();
+        this.imageName = imageName;
+        this.podName = podName;
+        this.passwd = passwd;
+        this.hostName = hostName;
+        this.cpuReq = cpuReq;
+        this.cpuLimit = cpuLimit;
+        this.memoryReq = memoryReq;
+        this.memoryLimit = memoryLimit;
+    }
+
     public void create(CoreV1Api api,String namespace) throws ApiException{
 
         // create pod object
@@ -143,6 +163,16 @@ public class K3sPod {
         }
 
         container.setResources(requirements);
+
+        // create env
+        if (passwd != null && !passwd.equals("")){
+            List<V1EnvVar> env = new ArrayList<>();
+            env.add(new V1EnvVar()
+                    .name("VNC_PW")
+                    .value(passwd)
+            );
+            container.setEnv(env);
+        }
 
 
         // create volume mounts

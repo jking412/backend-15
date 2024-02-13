@@ -22,7 +22,8 @@ public class UosController {
     @GetMapping("/create")
     // 获取body中的podName）
     public Map<Object,Object> create(@RequestBody Map<String, String> body) throws Exception {
-        int res = uosService.create(body.get("name"), "uos", 1, 1, 1024, 1024);
+        K3sPod k3sPod = new K3sPod( "uos",body.get("name"),body.get("passwd"),"", 1, 1, 1024, 1024);
+        int res = uosService.create(k3sPod);
         if (res == -1){
             return Map.of("code",500,"msg","创建失败，已达到最大数量");
         }

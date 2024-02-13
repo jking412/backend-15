@@ -14,13 +14,13 @@ public class ContainerService {
 
     public static String uosImage = "uos";
 
-    public int create(String imageName,String podName,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit)
-    throws Exception{
-        if (imageName.equals(uosImage)){
-            return uosService.create(podName,hostName,cpuReq,cpuLimit,memoryReq,memoryLimit);
+    public int create(K3sPod k3sPod) throws Exception{
+        if (k3sPod.getImageName().equals(uosImage)){
+            return uosService.create(k3sPod);
         }
         return -1;
     }
+
 
     public boolean delete(String imageName,int num) throws Exception{
         if (imageName.equals(uosImage)){
