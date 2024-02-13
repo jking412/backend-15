@@ -51,21 +51,26 @@ public class K3sPod {
         podName = v1pod.getMetadata().getName();
 
         V1ResourceRequirements resources = v1podContainer.getResources();
-        for(Map.Entry<String, Quantity> entry : resources.getRequests().entrySet()){
-            if (entry.getKey().equals("cpu")){
-                cpuReq = entry.getValue().getNumber().intValue();
-            }
-            if (entry.getKey().equals("memory")){
-                memoryReq = entry.getValue().getNumber().divide(new BigDecimal(1024*1024)).intValue();
+        if (resources.getRequests() != null){
+            for(Map.Entry<String, Quantity> entry : resources.getRequests().entrySet()){
+                if (entry.getKey().equals("cpu")){
+                    cpuReq = entry.getValue().getNumber().intValue();
+                }
+                if (entry.getKey().equals("memory")){
+                    memoryReq = entry.getValue().getNumber().divide(new BigDecimal(1024*1024)).intValue();
+                }
             }
         }
 
-        for(Map.Entry<String, Quantity> entry : resources.getLimits().entrySet()){
-            if (entry.getKey().equals("cpu")){
-                cpuLimit = entry.getValue().getNumber().intValue();
-            }
-            if (entry.getKey().equals("memory")){
-                memoryLimit = entry.getValue().getNumber().divide(new BigDecimal(1024*1024)).intValue();
+
+        if (resources.getLimits() != null){
+            for(Map.Entry<String, Quantity> entry : resources.getLimits().entrySet()){
+                if (entry.getKey().equals("cpu")){
+                    cpuLimit = entry.getValue().getNumber().intValue();
+                }
+                if (entry.getKey().equals("memory")){
+                    memoryLimit = entry.getValue().getNumber().divide(new BigDecimal(1024*1024)).intValue();
+                }
             }
         }
 

@@ -46,6 +46,9 @@ public class K3sService {
                     .port(port.getPort())
                     .targetPort(port.getTargetPort())
                     .protocol(port.getProtocol())
+                    // TODO: 与SecurityGroupPort的name并无关联，但是这并不好,需要将SecurityGroupPort和K3sServicePort整合
+                    // 需要将protocol小写，因为k8s的api规定protocol必须小写
+                    .name(String.format("%d-%s", port.getPort(), port.getProtocol().toLowerCase()))
             );
         }
 
