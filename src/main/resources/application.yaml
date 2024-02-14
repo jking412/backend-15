@@ -1,6 +1,9 @@
 k3s:
   max-container-num: 10
 
+disk:
+  path: "data/disk"
+
 nginx:
   conf:
     file:
