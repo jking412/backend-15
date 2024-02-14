@@ -51,6 +51,10 @@ public class DiskService {
         return deleteAllFileInDirectory(diskFile.getAbsolutePath());
     }
 
+    public String getDiskPath(Disk disk) {
+        return diskPath + "/" + disk.getName();
+    }
+
     private boolean deleteAllFileInDirectory(String filePath) {
         // 删除diskPath下所有文件夹及其下所有文件
         File file = new File(filePath);

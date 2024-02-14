@@ -1,6 +1,8 @@
 package com.example.backend.controller;
 
 import com.example.backend.k3s.*;
+import com.example.backend.k3s.disk.Disk;
+import com.example.backend.service.DiskService;
 import com.example.backend.service.NetworkService;
 import com.example.backend.service.UosService;
 import com.google.protobuf.Api;
@@ -19,6 +21,8 @@ public class UosController {
     private UosService uosService;
     @Autowired
     private NetworkService networkService;
+    @Autowired
+    private DiskService diskService;
 
 
     @GetMapping("/create")
@@ -94,6 +98,25 @@ public class UosController {
     public Map<Object,Object> networkDelete(@RequestBody Map<String,String> map) throws Exception {
         String name = map.get("name");
         networkService.delete(name);
+        return Map.of("code",200,"msg","删除成功");
+    }
+
+    @GetMapping("/disk")
+    public Map<Object,Object> disk(@RequestBody Map<String,String> map) throws Exception {
+        String name = map.get("name");
+        String podName = map.get("podName");
+        String podPath = map.get("podPath");
+        Disk disk = new Disk(name,podName,podPath);
+        diskService.create(disk);
+        return Map.of("code",200,"msg","创建成功");
+    }
+
+    @GetMapping("/disk/delete")
+    public Map<Object,Object> diskDelete(@RequestBody Map<String,String> map) throws Exception {
+        String name = map.get("name");
+        Disk disk = new Disk();
+        disk.setName(name);
+        diskService.delete(disk);
         return Map.of("code",200,"msg","删除成功");
     }
 

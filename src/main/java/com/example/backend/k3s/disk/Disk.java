@@ -10,6 +10,9 @@ public class Disk {
     private String podPath;
 //    private String hostPath;
 
+    public Disk() {
+    }
+
     public Disk(String name, String podName, String podPath) {
         this.name = name;
         this.podName = podName;

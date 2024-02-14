@@ -30,8 +30,11 @@ public class K3sPod {
     private Map<String,String> labels;
     private List<Integer> ports;
     // volumeName: volumePath
+    // volume default hostPath
+    // name:hostPath
     private Map<String,String> volumes;
     // volumeName: mountPath
+    // name:mountPath
     private Map<String,String> volumeMounts;
     static String defaultPolicy = "IfNotPresent";
 
