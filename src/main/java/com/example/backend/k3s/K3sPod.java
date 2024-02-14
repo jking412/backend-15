@@ -1,6 +1,7 @@
 package com.example.backend.k3s;
 
 
+import com.example.backend.k3s.disk.Disk;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
@@ -29,6 +30,8 @@ public class K3sPod {
     private String imagePullPolicy;
     private Map<String,String> labels;
     private List<Integer> ports;
+    // mountPath:Disk
+    private Map<String, Disk> mountDisks;
     // volumeName: volumePath
     // volume default hostPath
     // name:hostPath
@@ -105,7 +108,7 @@ public class K3sPod {
     }
 
     // String imageName,String podName,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit
-    public K3sPod(String imageName,String podName,String passwd,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit){
+    public K3sPod(String imageName,String podName,String passwd,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit,Map<String,Disk> mountDisks){
         this();
         this.imageName = imageName;
         this.podName = podName;
@@ -115,6 +118,34 @@ public class K3sPod {
         this.cpuLimit = cpuLimit;
         this.memoryReq = memoryReq;
         this.memoryLimit = memoryLimit;
+        this.mountDisks = mountDisks;
+        this.labels = new HashMap<>();
+        this.volumes = new HashMap<>();
+        this.volumeMounts = new HashMap<>();
+
+        // 将mountDisks转为volume和volumeMounts
+        for(Map.Entry<String,Disk> entry : mountDisks.entrySet()){
+            String mountPath = entry.getKey();
+            String hostPath = entry.getValue().getHostPath();
+            String volumeName = entry.getValue().getName();
+            volumes.put(volumeName,hostPath);
+            volumeMounts.put(volumeName,mountPath);
+        }
+    }
+
+    public void setMountDisks(Map<String,Disk> mountDisks){
+        this.mountDisks = mountDisks;
+        this.volumes = new HashMap<>();
+        this.volumeMounts = new HashMap<>();
+
+        // 将mountDisks转为volume和volumeMounts
+        for(Map.Entry<String,Disk> entry : mountDisks.entrySet()){
+            String mountPath = entry.getKey();
+            String hostPath = entry.getValue().getHostPath();
+            String volumeName = entry.getValue().getName();
+            volumes.put(volumeName,hostPath);
+            volumeMounts.put(volumeName,mountPath);
+        }
     }
 
     public void create(CoreV1Api api,String namespace) throws ApiException{

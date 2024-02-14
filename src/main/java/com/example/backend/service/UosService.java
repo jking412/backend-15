@@ -149,6 +149,9 @@ public class UosService {
         // 设置密码
         pod.setPasswd(k3sPod.getPasswd());
 
+        // 设置磁盘挂载
+        pod.setMountDisks(k3sPod.getMountDisks());
+
         pod.create(k3s.getCoreV1Api(),"default");
 
         // 在pod创建后，将编号加入existService

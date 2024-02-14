@@ -52,7 +52,7 @@ public class DiskService {
     }
 
     public String getDiskPath(Disk disk) {
-        return diskPath + "/" + disk.getName();
+        return System.getProperty("user.dir") + "/" + diskPath + "/" + disk.getName();
     }
 
     private boolean deleteAllFileInDirectory(String filePath) {

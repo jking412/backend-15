@@ -8,7 +8,7 @@ public class Disk {
     private String name;
     private String podName;
     private String podPath;
-//    private String hostPath;
+    private String hostPath;
 
     public Disk() {
     }
@@ -17,6 +17,13 @@ public class Disk {
         this.name = name;
         this.podName = podName;
         this.podPath = podPath;
+    }
+
+    public Disk(String name, String podName, String podPath, String hostPath) {
+        this.name = name;
+        this.podName = podName;
+        this.podPath = podPath;
+        this.hostPath = hostPath;
     }
 
 }
