@@ -171,7 +171,11 @@ public class UosService {
             nginxConf.addUpstream(String.format("desktop-%d",num),String.format("uos-svc-%d:80",num));
             nginxConf.addLocationPrefix(String.format("desktop-%d",num),String.format("/env/%d",num));
         }
-        nginxConf.writeToNginxConfFile();
+
+        boolean res = nginxConf.writeToNginxConfFile();
+        if (!res){
+            return -1;
+        }
 
         // delete nginx pod to reload nginx conf
         if (existService.size() > 1){
