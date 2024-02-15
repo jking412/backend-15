@@ -20,14 +20,16 @@ public class DiskService {
         // 先检查diskPath是否存在，不存在则创建
         File file = new File(diskPath);
         if (!file.exists()) {
-            file.mkdirs();
+            boolean res = file.mkdirs();
+            if(!res)return false;
         }
         // 创建diskPath/disk.getName()文件夹
         File diskFile = new File(diskPath + "/" + disk.getName());
         if (diskFile.exists()) {
             return false;
         }
-        diskFile.mkdirs();
+        boolean res = diskFile.mkdirs();
+        if(!res)return false;
         // 将podPath下的文件复制到diskPath/disk.getName()文件夹下
         // 用kubectl cp podName:podPath rootPath/diskPath/disk.getName()
         // 获取程序运行的rootPath

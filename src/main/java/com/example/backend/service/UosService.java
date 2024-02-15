@@ -39,7 +39,7 @@ public class UosService {
 
 
 
-    public UosService() throws Exception {
+    public UosService()  {
         // TODO: 注入在构造函数中的存在问题，k3s不能使用Autowired注入
         existService = new HashSet<>();
         lock = new ReentrantLock();
@@ -129,7 +129,7 @@ public class UosService {
         K3sPod pod = new K3sPod();
 
         // 如果containerName不为空，就使用containerName，否则使用uos-编号
-        if (k3sPod.getPodName() != null && !k3sPod.getPodName().equals("")){
+        if (k3sPod.getPodName() != null && !k3sPod.getPodName().isEmpty()){
             pod.setPodName(k3sPod.getPodName());
         }else {
             pod.setPodName(String.format("uos-%d",serviceNum));

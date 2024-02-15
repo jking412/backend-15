@@ -39,7 +39,7 @@ public class Network {
     public void create(CoreV1Api api, String namespace) throws Exception {
         K3sService k3sService = new K3sService();
         k3sService.setServiceName(name);
-        k3sService.setSelector(new HashMap<String,String>(){{
+        k3sService.setSelector(new HashMap<>(){{
             put("app", podLabel);
         }});
         k3sService.setType(K3sService.ClusterIP);
