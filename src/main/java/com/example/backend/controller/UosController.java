@@ -114,8 +114,11 @@ public class UosController {
         String podName = map.get("podName");
         String podPath = map.get("podPath");
         Disk disk = new Disk(name,podName,podPath);
-        diskService.create(disk);
-        return Map.of("code",200,"msg","创建成功");
+        boolean res = diskService.create(disk);
+        if (res){
+            return Map.of("code",200,"msg","创建成功");
+        }
+        return Map.of("code",500,"msg","创建失败");
     }
 
     @GetMapping("/disk/delete")
@@ -123,8 +126,11 @@ public class UosController {
         String name = map.get("name");
         Disk disk = new Disk();
         disk.setName(name);
-        diskService.delete(disk);
-        return Map.of("code",200,"msg","删除成功");
+        boolean res = diskService.delete(disk);
+        if (res){
+            return Map.of("code",200,"msg","删除成功");
+        }
+        return Map.of("code",500,"msg","删除失败");
     }
 
 }

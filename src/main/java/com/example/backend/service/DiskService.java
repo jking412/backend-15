@@ -4,6 +4,8 @@ import com.example.backend.k3s.disk.Disk;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.util.List;
 
@@ -34,6 +36,18 @@ public class DiskService {
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         try {
             Process process = processBuilder.start();
+            // output stdout and stderr
+//            BufferedReader reader = new BufferedReader(new java.io.InputStreamReader(process.getInputStream()));
+//            BufferedReader errorReader = new BufferedReader(new java.io.InputStreamReader(process.getErrorStream()));
+//            String line;
+//            while ((line = reader.readLine()) != null) {
+//                System.out.println(line);
+//            }
+//
+//            while ((line = errorReader.readLine()) != null) {
+//                System.out.println(line);
+//            }
+
             process.waitFor();
         } catch (Exception e) {
             e.printStackTrace();
