@@ -73,17 +73,19 @@ public class NginxConf {
         locationPrefix = new java.util.HashMap<>();
     }
 
-    public void writeToNginxConfFile() throws IOException {
+    public boolean writeToNginxConfFile() throws IOException {
         // 检查path是否存在
         File nginxFilePathFile = new File(nginxFilePath);
         if (!nginxFilePathFile.exists()){
-            nginxFilePathFile.mkdirs();
+            boolean res = nginxFilePathFile.mkdirs();
+            if (!res)return false;
         }
 
         // 检查file是否存在
         nginxConfFile = new File(nginxFilePathFile,nginxFileName);
         if (!nginxConfFile.exists()){
-            nginxConfFile.createNewFile();
+            boolean res = nginxConfFile.createNewFile();
+            if (!res)return false;
         }
 
         // 下面代码默认情况为截断写入
@@ -106,6 +108,7 @@ public class NginxConf {
         bufferedWriter.write(String.format(serverTemplate,serverStringBuilder));
 
         bufferedWriter.close();
+        return true;
     }
 
     public void addUpstream(String upstreamName,String serverDomain){
