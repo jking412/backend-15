@@ -150,7 +150,9 @@ public class UosService {
         pod.setPasswd(k3sPod.getPasswd());
 
         // 设置磁盘挂载
-        pod.setMountDisks(k3sPod.getMountDisks());
+        if (k3sPod.getMountDisks() != null){
+            pod.setMountDisks(k3sPod.getMountDisks());
+        }
 
         pod.create(k3s.getCoreV1Api(),"default");
 
@@ -222,11 +224,18 @@ public class UosService {
                     ))
             ));
 
+            // get nginxFilePath and nginxFileName
+            String nginxFilePath = nginxConf.getNginxFilePath();
+            String nginxFileName = nginxConf.getNginxFileName();
+
+            String nginxHostPath = String.format("%s/%s/%s",System.getProperty("user.dir"),nginxFilePath,nginxFileName);
+
+
             // TODO: path需要修改为可动态配置
             podSpec.setVolumes(List.of(new V1Volume()
                     .name("nginx-conf")
                     .hostPath(new V1HostPathVolumeSource()
-                            .path("/home/jking/IdeaProjects/backend/data/nginx/default.conf")
+                            .path(nginxHostPath)
                     )
             ));
             templateSpec.setSpec(podSpec);

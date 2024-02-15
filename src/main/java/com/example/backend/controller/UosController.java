@@ -30,12 +30,12 @@ public class UosController {
     public Map<Object,Object> create(@RequestBody Map<String, String> body) throws Exception {
 
         // TODO: 以下为测试，仅供参考
-        Disk disk = new Disk("disk-1","uos","/home/test");
-        disk.setHostPath(diskService.getDiskPath(disk));
+//        Disk disk = new Disk("disk-1","uos","/home/test");
+//        disk.setHostPath(diskService.getDiskPath(disk));
+//
+//        Map<String,Disk> mountDisks = Map.of("/test",disk);
 
-        Map<String,Disk> mountDisks = Map.of("/test",disk);
-
-        K3sPod k3sPod = new K3sPod( "uos",body.get("name"),body.get("passwd"),"", 0, 0, 0, 0, mountDisks);
+        K3sPod k3sPod = new K3sPod("uos",body.get("name"),body.get("passwd"),"", 0, 0, 0, 0);
         int res = uosService.create(k3sPod);
         if (res == -1){
             return Map.of("code",500,"msg","创建失败，已达到最大数量");

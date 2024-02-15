@@ -107,7 +107,21 @@ public class K3sPod {
         this.passwd = passwd;
     }
 
-    // String imageName,String podName,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit
+    // String imageName,String podName,String passwd,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit
+    public K3sPod(String imageName,String podName,String passwd,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit){
+        this();
+        this.imageName = imageName;
+        this.podName = podName;
+        this.passwd = passwd;
+        this.hostName = hostName;
+        this.cpuReq = cpuReq;
+        this.cpuLimit = cpuLimit;
+        this.memoryReq = memoryReq;
+        this.memoryLimit = memoryLimit;
+    }
+
+
+    // String imageName,String podName,String passwd,String hostName,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit,Map<String,Disk> mountDisks
     public K3sPod(String imageName,String podName,String passwd,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit,Map<String,Disk> mountDisks){
         this();
         this.imageName = imageName;
