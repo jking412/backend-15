@@ -1,11 +1,14 @@
 package com.example.backend.k3s;
 
 
+import com.example.backend.k3s.disk.Disk;
+import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,15 +16,28 @@ import java.util.Map;
 
 @Data
 public class K3sPod {
+
+    private int podId;
+    private int cpuReq;
+    private int cpuLimit;
+    private int memoryReq;
+    private int memoryLimit;
+    private String passwd;
     private String podName;
+    private String hostName;
     private String containerName;
     private String imageName;
     private String imagePullPolicy;
     private Map<String,String> labels;
     private List<Integer> ports;
+    // mountPath:Disk
+    private Map<String, Disk> mountDisks;
     // volumeName: volumePath
+    // volume default hostPath
+    // name:hostPath
     private Map<String,String> volumes;
     // volumeName: mountPath
+    // name:mountPath
     private Map<String,String> volumeMounts;
     static String defaultPolicy = "IfNotPresent";
 
@@ -32,6 +48,118 @@ public class K3sPod {
         this.volumes = new HashMap<>();
         this.volumeMounts = new HashMap<>();
 
+    }
+
+    public K3sPod(V1Pod v1pod){
+
+        V1Container v1podContainer = v1pod.getSpec().getContainers().get(0);
+        podId = Integer.parseInt(v1podContainer.getName().substring(4));
+        podName = v1pod.getMetadata().getName();
+
+        V1ResourceRequirements resources = v1podContainer.getResources();
+        if (resources.getRequests() != null){
+            for(Map.Entry<String, Quantity> entry : resources.getRequests().entrySet()){
+                if (entry.getKey().equals("cpu")){
+                    cpuReq = entry.getValue().getNumber().intValue();
+                }
+                if (entry.getKey().equals("memory")){
+                    memoryReq = entry.getValue().getNumber().divide(new BigDecimal(1024*1024)).intValue();
+                }
+            }
+        }
+
+
+        if (resources.getLimits() != null){
+            for(Map.Entry<String, Quantity> entry : resources.getLimits().entrySet()){
+                if (entry.getKey().equals("cpu")){
+                    cpuLimit = entry.getValue().getNumber().intValue();
+                }
+                if (entry.getKey().equals("memory")){
+                    memoryLimit = entry.getValue().getNumber().divide(new BigDecimal(1024*1024)).intValue();
+                }
+            }
+        }
+
+        containerName = v1podContainer.getName();
+        imageName = v1podContainer.getImage();
+        imagePullPolicy = v1podContainer.getImagePullPolicy();
+
+//        labels = v1pod.getMetadata().getLabels();
+//        ports = new ArrayList<>();
+//        for(V1ContainerPort port : v1podContainer.getPorts()){
+//            ports.add(port.getContainerPort());
+//        }
+//
+//        volumes = new HashMap<>();
+//        volumeMounts = new HashMap<>();
+//        for(V1Volume volume : v1pod.getSpec().getVolumes()){
+//            volumes.put(volume.getName(),volume.getHostPath().getPath());
+//        }
+//
+//        for(V1VolumeMount volumeMount : v1podContainer.getVolumeMounts()){
+//            volumeMounts.put(volumeMount.getName(),volumeMount.getMountPath());
+//        }
+
+    }
+
+    public K3sPod(V1Pod v1pod,String passwd){
+        this(v1pod);
+        this.passwd = passwd;
+    }
+
+    // String imageName,String podName,String passwd,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit
+    public K3sPod(String imageName,String podName,String passwd,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit){
+        this();
+        this.imageName = imageName;
+        this.podName = podName;
+        this.passwd = passwd;
+        this.hostName = hostName;
+        this.cpuReq = cpuReq;
+        this.cpuLimit = cpuLimit;
+        this.memoryReq = memoryReq;
+        this.memoryLimit = memoryLimit;
+    }
+
+
+    // String imageName,String podName,String passwd,String hostName,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit,Map<String,Disk> mountDisks
+    public K3sPod(String imageName,String podName,String passwd,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit,Map<String,Disk> mountDisks){
+        this();
+        this.imageName = imageName;
+        this.podName = podName;
+        this.passwd = passwd;
+        this.hostName = hostName;
+        this.cpuReq = cpuReq;
+        this.cpuLimit = cpuLimit;
+        this.memoryReq = memoryReq;
+        this.memoryLimit = memoryLimit;
+        this.mountDisks = mountDisks;
+        this.labels = new HashMap<>();
+        this.volumes = new HashMap<>();
+        this.volumeMounts = new HashMap<>();
+
+        // 将mountDisks转为volume和volumeMounts
+        for(Map.Entry<String,Disk> entry : mountDisks.entrySet()){
+            String mountPath = entry.getKey();
+            String hostPath = entry.getValue().getHostPath();
+            String volumeName = entry.getValue().getName();
+            volumes.put(volumeName,hostPath);
+            volumeMounts.put(volumeName,mountPath);
+        }
+    }
+
+    public void setMountDisks(Map<String,Disk> mountDisks){
+        this.mountDisks = mountDisks;
+        this.volumes = new HashMap<>();
+        this.volumeMounts = new HashMap<>();
+
+        // 将mountDisks转为volume和volumeMounts
+        for(Map.Entry<String,Disk> entry : mountDisks.entrySet()){
+            String mountPath = entry.getKey();
+            String hostPath = entry.getValue().getHostPath();
+            String volumeName = entry.getValue().getName();
+            volumes.put(volumeName,hostPath);
+            volumeMounts.put(volumeName,mountPath);
+        }
     }
 
     public void create(CoreV1Api api,String namespace) throws ApiException{
@@ -61,6 +189,44 @@ public class K3sPod {
         container.setImage(imageName);
         container.setImagePullPolicy(imagePullPolicy);
         container.setPorts(ports);
+
+        // create resource requirements
+        V1ResourceRequirements requirements = new V1ResourceRequirements();
+        if (cpuReq != 0 || memoryReq != 0){
+            Map<String, Quantity> requests = new HashMap<>();
+            if (cpuReq != 0){
+                requests.put("cpu",new Quantity(String.format("%d",cpuReq)));
+            }
+            if (memoryReq != 0){
+                requests.put("memory",new Quantity(String.format("%dMi",memoryReq)));
+            }
+            requirements.setRequests(requests);
+        }
+
+        // create resource limits
+        if (cpuLimit != 0 || memoryLimit != 0){
+            Map<String, Quantity> limits = new HashMap<>();
+            if (cpuLimit != 0){
+                limits.put("cpu",new Quantity(String.format("%d",cpuLimit)));
+            }
+            if (memoryLimit != 0){
+                limits.put("memory",new Quantity(String.format("%dMi",memoryLimit)));
+            }
+            requirements.setLimits(limits);
+        }
+
+        container.setResources(requirements);
+
+        // create env
+        if (passwd != null && !passwd.equals("")){
+            List<V1EnvVar> env = new ArrayList<>();
+            env.add(new V1EnvVar()
+                    .name("VNC_PW")
+                    .value(passwd)
+            );
+            container.setEnv(env);
+        }
+
 
         // create volume mounts
         if (volumeMounts != null){
@@ -103,4 +269,10 @@ public class K3sPod {
     public void delete(CoreV1Api api,String namespace) throws ApiException {
         api.deleteNamespacedPod(podName,namespace,null,null,null,null,null,null);
     }
+
+    // pod 会在gracePeriodSeconds后被强制删除
+    public void deleteForce(CoreV1Api api,String namespace,Integer gracePeriodSeconds) throws ApiException {
+        api.deleteNamespacedPod(podName,namespace,null,null,gracePeriodSeconds,null,null,null);
+    }
+
 }

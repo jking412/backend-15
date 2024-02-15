@@ -14,5 +14,14 @@ spec:
       env:
         - name: VNC_PW
           value: "12345678"
+      volumeMounts:
+        - name: nfs
+          mountPath: /mnt
+  volumes:
+    - name: nfs
+      persistentVolumeClaim:
+        claimName: nfs
+
+
 
 
