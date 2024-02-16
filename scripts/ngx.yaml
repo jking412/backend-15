@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ngx
+  labels:
+    app: ngx
+spec:
+  containers:
+    - name: ngx
+      image: nginx:alpine
+      imagePullPolicy: IfNotPresent
+      ports:
+          - containerPort: 80
+      volumeMounts:
+        - mountPath: /etc/nginx/conf.d
+          name: ngx-conf
+
+  initContainers:
+    - name: ngx-init
+      image: busybox
+      command: ['sh', '-c', 'shell']
+      volumeMounts:
+        - mountPath: /etc/nginx/conf.d
+          name: ngx-conf
+  volumes:
+    - name: ngx-conf
+      emptyDir: {}

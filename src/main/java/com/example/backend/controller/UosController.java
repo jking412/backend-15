@@ -29,7 +29,7 @@ public class UosController {
     // 获取body中的podName）
     public Map<Object,Object> create(@RequestBody Map<String, String> body) throws Exception {
 
-        // TODO: 以下为测试，仅供参考
+        // 以下为测试，仅供参考
 //        Disk disk = new Disk("disk-1","uos","/home/test");
 //        disk.setHostPath(diskService.getDiskPath(disk));
 //

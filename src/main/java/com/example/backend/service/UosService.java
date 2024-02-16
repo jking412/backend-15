@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.FileReader;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -30,8 +32,8 @@ public class UosService {
     @Autowired
     private K3s k3s;
 
-    @Autowired
-    private NginxConf nginxConf;
+//    @Autowired
+//    private NginxConf nginxConf;
 
     // TODO: 为了检查是否初始化，这里使用了一个flag，但是这样的实现方式不太好
     private boolean initFlag = false;
@@ -167,28 +169,76 @@ public class UosService {
         service.create(k3s.getCoreV1Api(),"default");
 
         // nginx conf
-        for (int num : existService){
-            nginxConf.addUpstream(String.format("desktop-%d",num),String.format("uos-svc-%d:80",num));
-            nginxConf.addLocationPrefix(String.format("desktop-%d",num),String.format("/env/%d",num));
-        }
+//        for (int num : existService){
+//            nginxConf.addUpstream(String.format("desktop-%d",num),String.format("uos-svc-%d:80",num));
+//            nginxConf.addLocationPrefix(String.format("desktop-%d",num),String.format("/env/%d",num));
+//        }
+//
+//        boolean res = nginxConf.writeToNginxConfFile();
+//        if (!res){
+//            return -1;
+//        }
 
-        boolean res = nginxConf.writeToNginxConfFile();
-        if (!res){
-            return -1;
-        }
-
-        // delete nginx pod to reload nginx conf
-        if (existService.size() > 1){
-            V1PodList podList = k3s.listPod();
-            for (var item : podList.getItems()){
-                if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("ngx")){
-                    K3sPod nginxPod = new K3sPod();
-                    nginxPod.setPodName(item.getMetadata().getName());
-                    nginxPod.delete(k3s.getCoreV1Api(),"default");
-                    break;
-                }
+        // if exist nginx pod, delete it
+        V1PodList podList = k3s.listPod();
+        for (var item : podList.getItems()){
+            if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("ngx")){
+                K3sPod nginxPod = new K3sPod();
+                nginxPod.setPodName(item.getMetadata().getName());
+                nginxPod.deleteForce(k3s.getCoreV1Api(),"default",0);
+                break;
             }
         }
+
+        // create nginx pod
+        V1Pod nginxPod = new V1Pod();
+        V1ObjectMeta meta = new V1ObjectMeta();
+        meta.setName("ngx");
+        meta.setLabels(Map.of("app","ngx"));
+        nginxPod.setMetadata(meta);
+
+        V1PodSpec podSpec = new V1PodSpec();
+
+        // nginx container
+        V1Container container = new V1Container().name("nginx")
+                .image("nginx:alpine")
+                .imagePullPolicy("IfNotPresent")
+                .ports(List.of(new V1ContainerPort().containerPort(80)))
+                .volumeMounts(List.of(new V1VolumeMount().name("nginx-conf").mountPath("/etc/nginx/conf.d")));
+
+        podSpec.setContainers(List.of(container));
+        // nginx init container
+        File file = new File("conf-gen.sh");
+        FileReader fileReader = new FileReader(file);
+        char[] buffer = new char[(int) file.length()];
+        fileReader.read(buffer);
+        fileReader.close();
+        String shell = new String(buffer);
+
+        List<String> command = new ArrayList<>();
+        command.add("sh");
+        command.add("-c");
+        command.add(shell);
+        command.add("--");
+        for (int num : existService){
+            command.add(String.format("%d",num));
+        }
+
+        V1Container ngxInitContainer = new V1Container().name("ngx-init")
+                .image("busybox")
+                .imagePullPolicy("IfNotPresent")
+                .volumeMounts(List.of(new V1VolumeMount().name("nginx-conf").mountPath("/etc/nginx/conf.d")));
+        ngxInitContainer.setCommand(command);
+
+        podSpec.setInitContainers(List.of(ngxInitContainer));
+
+        // nginx volume
+        podSpec.setVolumes(List.of(new V1Volume().name("nginx-conf").emptyDir(new V1EmptyDirVolumeSource())));
+
+        podSpec.setContainers(List.of(container));
+        nginxPod.setSpec(podSpec);
+
+        k3s.getCoreV1Api().createNamespacedPod("default",nginxPod,null,null,null,null);
 
         if (existService.size() == 1){
 
@@ -203,48 +253,107 @@ public class UosService {
 //            nginxPod.setVolumeMounts(Map.of("nginx-conf","/etc/nginx/conf.d/default.conf"));
 //            nginxPod.create(k3s.getCoreV1Api(),"default");
             // nginx deployment
-            K3sDeployment nginxDeployment = new K3sDeployment();
-            nginxDeployment.setDeploymentName("ngx-dep");
-            nginxDeployment.setReplicas(1);
-            nginxDeployment.setMatchLabels(Map.of("app","ngx"));
+//            K3sDeployment nginxDeployment = new K3sDeployment();
+//            nginxDeployment.setDeploymentName("ngx-dep");
+//            nginxDeployment.setReplicas(1);
+//            nginxDeployment.setMatchLabels(Map.of("app","ngx"));
+//
+//            // nginx template
+//            V1PodTemplateSpec templateSpec = new V1PodTemplateSpec();
+//            V1ObjectMeta meta = new V1ObjectMeta();
+//            meta.setLabels(Map.of("app","ngx"));
+//            templateSpec.setMetadata(meta);
 
-            // nginx template
-            V1PodTemplateSpec templateSpec = new V1PodTemplateSpec();
-            V1ObjectMeta meta = new V1ObjectMeta();
-            meta.setLabels(Map.of("app","ngx"));
-            templateSpec.setMetadata(meta);
+//            spec:
+//            containers:
+//            - name: ngx
+//            image: nginx:alpine
+//            imagePullPolicy: IfNotPresent
+//            ports:
+//            - containerPort: 80
+//            volumeMounts:
+//            - mountPath: /etc/nginx/conf.d
+//            name: ngx-conf
+//
+//            initContainers:
+//            - name: ngx-init
+//            image: busybox
+//            command: ['sh', '-c', 'shell']
+//            volumeMounts:
+//            - mountPath: /etc/nginx/conf.d
+//            name: ngx-conf
+//            volumes:
+//            - name: ngx-conf
+//            emptyDir: {}
 
-            V1PodSpec podSpec = new V1PodSpec();
-            podSpec.setContainers(List.of(new V1Container()
-                    .name("nginx")
-                    .image("nginx:alpine")
-                    .imagePullPolicy("IfNotPresent")
-                    .ports(List.of(new V1ContainerPort()
-                            .containerPort(80)
-                    ))
-                    .volumeMounts(List.of(new V1VolumeMount()
-                            .name("nginx-conf")
-                            .mountPath("/etc/nginx/conf.d/default.conf")
-                    ))
-            ));
+//            V1PodSpec podSpec = new V1PodSpec();
+//            podSpec.setContainers(List.of(new V1Container()
+//                    .name("nginx")
+//                    .image("nginx:alpine")
+//                    .imagePullPolicy("IfNotPresent")
+//                    .ports(List.of(new V1ContainerPort()
+//                            .containerPort(80)
+//                    ))
+//                    .volumeMounts(List.of(new V1VolumeMount()
+//                            .name("nginx-conf")
+//                            .mountPath("/etc/nginx/conf.d/default.conf")
+//                    ))
+//            ));
 
             // get nginxFilePath and nginxFileName
-            String nginxFilePath = nginxConf.getNginxFilePath();
-            String nginxFileName = nginxConf.getNginxFileName();
+//            String nginxFilePath = nginxConf.getNginxFilePath();
+//            String nginxFileName = nginxConf.getNginxFileName();
+//
+//            String nginxHostPath = String.format("%s/%s/%s",System.getProperty("user.dir"),nginxFilePath,nginxFileName);
+//
+//
+//
+//            podSpec.setVolumes(List.of(new V1Volume()
+//                    .name("nginx-conf")
+//                    .hostPath(new V1HostPathVolumeSource()
+//                            .path(nginxHostPath)
+//                    )
+//            ));
 
-            String nginxHostPath = String.format("%s/%s/%s",System.getProperty("user.dir"),nginxFilePath,nginxFileName);
+//            podSpec.setVolumes(List.of(new V1Volume()
+//                    .name("nginx-conf")
+//                    .emptyDir(new V1EmptyDirVolumeSource())
+//            ));
+//
+//            V1Container ngxContainer = new V1Container().name("ngx")
+//                    .image("nginx:alpine")
+//                    .imagePullPolicy("IfNotPresent")
+//                    .ports(List.of(new V1ContainerPort().containerPort(80)))
+//                    .volumeMounts(List.of(new V1VolumeMount().name("nginx-conf").mountPath("/etc/nginx/conf.d")));
+//            podSpec.setContainers(List.of(ngxContainer));
 
-
-            // TODO: path需要修改为可动态配置
-            podSpec.setVolumes(List.of(new V1Volume()
-                    .name("nginx-conf")
-                    .hostPath(new V1HostPathVolumeSource()
-                            .path(nginxHostPath)
-                    )
-            ));
-            templateSpec.setSpec(podSpec);
-
-            nginxDeployment.create(k3s.getAppsV1Api(),"default",templateSpec);
+            // read core shell from conf-gen.sh
+//            File file = new File("conf-gen.sh");
+//            FileReader fileReader = new FileReader(file);
+//            char[] buffer = new char[(int) file.length()];
+//            fileReader.read(buffer);
+//            fileReader.close();
+//            String shell = new String(buffer);
+//
+//            List<String> command = new ArrayList<>();
+//            command.add("sh");
+//            command.add("-c");
+//            command.add(shell);
+//            command.add("--");
+//            for (int num : existService){
+//                command.add(String.format("%d",num));
+//            }
+//
+//            V1Container ngxInitContainer = new V1Container().name("ngx-init")
+//                    .image("busybox")
+//                    .volumeMounts(List.of(new V1VolumeMount().name("nginx-conf").mountPath("/etc/nginx/conf.d")));
+//            ngxInitContainer.setCommand(command);
+//
+//            podSpec.setInitContainers(List.of(ngxInitContainer));
+//
+//            templateSpec.setSpec(podSpec);
+//
+//            nginxDeployment.create(k3s.getAppsV1Api(),"default",templateSpec);
 
             // nginx service
             K3sService nginxService = new K3sService();
@@ -278,7 +387,7 @@ public class UosService {
             }
         }
         // deleteForce 会保证pod在3s内被删除
-        pod.deleteForce(k3s.getCoreV1Api(),"default",3);
+        pod.deleteForce(k3s.getCoreV1Api(),"default",0);
 
         // 在pod删除后，从existService中删除
         existService.remove(num);
@@ -290,27 +399,27 @@ public class UosService {
         service.delete(k3s.getCoreV1Api(),"default");
 
         // 删除pod时conf只需要删除upstream和location，但是不需要更改文件
-        nginxConf.deleteUpstream(String.format("desktop-%d",num));
-        nginxConf.deleteLocationPrefix(String.format("desktop-%d",num));
+//        nginxConf.deleteUpstream(String.format("desktop-%d",num));
+//        nginxConf.deleteLocationPrefix(String.format("desktop-%d",num));
 
         // delete nginx pod to reload nginx conf
-        if (existService.size() > 1){
-            V1PodList podList = k3s.listPod();
-            for (var item : podList.getItems()){
-                if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("ngx")){
-                    K3sPod nginxPod = new K3sPod();
-                    nginxPod.setPodName(item.getMetadata().getName());
-                    nginxPod.delete(k3s.getCoreV1Api(),"default");
-                    break;
-                }
-            }
-        }
+//        if (existService.size() > 1){
+//            V1PodList podList = k3s.listPod();
+//            for (var item : podList.getItems()){
+//                if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("ngx")){
+//                    K3sPod nginxPod = new K3sPod();
+//                    nginxPod.setPodName(item.getMetadata().getName());
+//                    nginxPod.deleteForce(k3s.getCoreV1Api(),"default",0);
+//                    break;
+//                }
+//            }
+//        }
 
         if (existService.isEmpty()){
             // nginx pod
-            K3sDeployment nginxDeployment = new K3sDeployment();
-            nginxDeployment.setDeploymentName("ngx-dep");
-            nginxDeployment.delete(k3s.getAppsV1Api(),"default");
+            K3sPod nginxPod = new K3sPod();
+            nginxPod.setPodName("ngx");
+            nginxPod.deleteForce(k3s.getCoreV1Api(),"default",0);
 
             // nginx service
             com.example.backend.k3s.K3sService nginxService = new com.example.backend.k3s.K3sService();
