@@ -52,6 +52,7 @@ public class K3sPod {
 
     public K3sPod(V1Pod v1pod){
 
+        // TODO: 默认认为pod只有一个container且第一个container是我们需要的是一个危险的行为
         V1Container v1podContainer = v1pod.getSpec().getContainers().get(0);
         podId = Integer.parseInt(v1podContainer.getName().substring(4));
         podName = v1pod.getMetadata().getName();
