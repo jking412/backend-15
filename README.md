@@ -25,7 +25,7 @@
 
 1. 安装k3s 和 containerd
     ```bash
-    curl -sfL https://rancher-mirror.rancher.cn/k3s/k3s-install.sh | INSTALL_K3S_MIRROR=cn K3S_KUBECONFIG_MODE="644" sh -
+    curl -sfL https://rancher-mirror.rancher.cn/k3s/k3s-install.sh | INSTALL_K3S_MIRROR=cn K3S_KUBECONFIG_MODE="644" sh -s - --system-default-registry "registry.cn-hangzhou.aliyuncs.com"
     ```
 2. 导入uos镜像
     ```bash
