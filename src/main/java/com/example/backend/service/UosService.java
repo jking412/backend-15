@@ -1,12 +1,14 @@
 package com.example.backend.service;
 
 
+import com.example.backend.dao.ConstantDao;
 import com.example.backend.k3s.*;
 import com.example.backend.utils.NginxConf;
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.*;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Data
+@Slf4j
 @Service
 public class UosService {
 
@@ -26,11 +29,14 @@ public class UosService {
 
     private Lock lock;
 
-    @Value("${k3s.max-container-num}")
+    @Value("${k3s.max-container-num:0}")
     private int maxContainerNum;
 
     @Autowired
     private K3s k3s;
+
+    @Autowired
+    private ConstantDao constant;
 
 //    @Autowired
 //    private NginxConf nginxConf;
@@ -49,30 +55,15 @@ public class UosService {
 
     private void init() throws Exception {
 
-        // 读取环境变量MAX_CONTAINER_NUM
-        String maxContainerNum1 = System.getenv("MAX_CONTAINER_NUM");
-        if (maxContainerNum1 != null){
-            // 解析如果没有异常，就使用环境变量的值
-            // 如果有异常，就使用配置文件中的值
-            boolean flag = true;
-            int tempNum = 0;
-            try {
-                tempNum = Integer.parseInt(maxContainerNum1);
-            }catch(NumberFormatException e){
-                flag = false;
-            }
-            if(flag) maxContainerNum = tempNum;
+        // 加入在yaml配置文件中没有配置maxContainerNum，那么读取Dao层中的默认配置
+        // maxContainerNum在大于0的情况下才被认为是有效的
+        if(maxContainerNum <= 0){
+            maxContainerNum = (int) constant.get("maxContainerNum");
         }
+        log.info("maxContainerNum: {}",maxContainerNum);
 
         V1PodList podList = k3s.listPod();
         for (var item : podList.getItems()){
-//            if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("uos-") &&
-//                    item.getMetadata().getDeletionTimestamp() == null){
-//                // get num
-//                String podName = item.getMetadata().getName();
-//                int num = Integer.parseInt(podName.substring(4));
-//                existService.add(num);
-//            }
             String containerName = item.getSpec().getContainers().get(0).getName();
             if (containerName != null && containerName.startsWith("uos-")
                     && item.getMetadata().getDeletionTimestamp() == null){
