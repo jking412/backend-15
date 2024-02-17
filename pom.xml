@@ -40,6 +40,16 @@
 			<version>18.0.0</version>
 		</dependency>
 
+		<!-- slf4j logback -->
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jcl-over-slf4j</artifactId>
+		</dependency>
+
 		<!-- 解决kubernetes client 依赖问题 -->
 <!--		<dependency>-->
 <!--			<groupId>org.bouncycastle</groupId>-->
