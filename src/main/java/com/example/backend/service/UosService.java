@@ -5,7 +5,6 @@ import com.example.backend.dao.ConstantDao;
 import com.example.backend.dao.PodDao;
 import com.example.backend.entity.Pod;
 import com.example.backend.k3s.*;
-import com.example.backend.utils.NginxConf;
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.*;
@@ -18,7 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileReader;
-import java.text.NumberFormat;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -69,16 +68,6 @@ public class UosService {
         }
         log.info("maxContainerNum: {}",maxContainerNum);
 
-//        V1PodList podList = k3s.listPod();
-//        for (var item : podList.getItems()){
-//            String containerName = item.getSpec().getContainers().get(0).getName();
-//            if (containerName != null && containerName.startsWith("uos-")
-//                    && item.getMetadata().getDeletionTimestamp() == null){
-//                int num = Integer.parseInt(containerName.substring(4));
-//                existService.add(num);
-//            }
-//        }
-
         List<Pod> podList = podDao.listPods(uosImageName);
         StringBuilder logStr = new StringBuilder("exist uos pod num list: [ ");
         for (var item : podList){
@@ -114,12 +103,7 @@ public class UosService {
         }
     }
 
-    private int internalCreate(K3sPod k3sPod) throws Exception {
-
-        if(existService.size() >= maxContainerNum){
-            return -1;
-        }
-
+    private int randomServiceNum(){
         int serviceNum;
         // 如果没有服务，编号为1，否则编号为最大编号+1
         if (existService.isEmpty()){
@@ -132,9 +116,11 @@ public class UosService {
                 serviceNum = new Random().nextInt(maxExistService + 100);
             }
         }
+        return serviceNum;
 
+    }
 
-        // uos pod
+    private K3sPod createUosPod(K3sPod k3sPod,int serviceNum) throws ApiException {
         K3sPod pod = new K3sPod();
 
         // 如果containerName不为空，就使用containerName，否则使用uos-编号
@@ -168,25 +154,18 @@ public class UosService {
         // 在pod创建后，将编号加入existService
         existService.add(serviceNum);
 
-        // uos service
+        return pod;
+    }
+
+    private void createUosService(K3sPod k3sPod,int serviceNum) throws ApiException {
         K3sService service = new K3sService();
         service.setServiceName(String.format("uos-svc-%d",serviceNum));
-        service.setSelector(pod.getLabels());
+        service.setSelector(Map.of("app",String.format("uos-%d",serviceNum)));
         service.setPorts(List.of(new K3sServicePort(80,new IntOrString(6080),"TCP")));
         service.create(k3s.getCoreV1Api(),"default");
+    }
 
-        // nginx conf
-//        for (int num : existService){
-//            nginxConf.addUpstream(String.format("desktop-%d",num),String.format("uos-svc-%d:80",num));
-//            nginxConf.addLocationPrefix(String.format("desktop-%d",num),String.format("/env/%d",num));
-//        }
-//
-//        boolean res = nginxConf.writeToNginxConfFile();
-//        if (!res){
-//            return -1;
-//        }
-
-        // if exist nginx pod, delete it
+    private void deleteNginxPodIfExist() throws ApiException {
         V1PodList podList = k3s.listPod();
         for (var item : podList.getItems()){
             if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("ngx")){
@@ -196,8 +175,9 @@ public class UosService {
                 break;
             }
         }
+    }
 
-        // create nginx pod
+    private void createNginxPod() throws ApiException, IOException {
         V1Pod nginxPod = new V1Pod();
         V1ObjectMeta meta = new V1ObjectMeta();
         meta.setName("ngx");
@@ -246,143 +226,56 @@ public class UosService {
         nginxPod.setSpec(podSpec);
 
         k3s.getCoreV1Api().createNamespacedPod("default",nginxPod,null,null,null,null);
+    }
+
+    private void createNginxService() throws ApiException {
+        K3sService nginxService = new K3sService();
+        nginxService.setServiceName("ngx-svc");
+        nginxService.setSelector(Map.of("app","ngx"));
+        nginxService.setPorts(List.of(new K3sServicePort(80,new IntOrString(80),"TCP")));
+        nginxService.create(k3s.getCoreV1Api(),"default");
+    }
+
+    private void createIngress() throws Exception {
+        K3sIngress ingress = new K3sIngress();
+        ingress.create(k3s.getNetworkingV1Api(),"default");
+    }
+
+
+    private int internalCreate(K3sPod k3sPod) throws Exception {
+
+        if(existService.size() >= maxContainerNum){
+            return -1;
+        }
+
+        int serviceNum = randomServiceNum();
+
+        // uos pod
+        K3sPod pod = createUosPod(k3sPod,serviceNum);
+
+        // uos service
+        createUosService(pod,serviceNum);
+
+        // if exist nginx pod, delete it
+        deleteNginxPodIfExist();
+
+        // create nginx pod
+        createNginxPod();
+
 
         if (existService.size() == 1){
-
-            // nginx pod
-//            K3sPod nginxPod = new K3sPod();
-//            nginxPod.setPodName("nginx");
-//            nginxPod.setContainerName("nginx");
-//            nginxPod.setImageName("nginx:alpine");
-//            nginxPod.setLabels(Map.of("app","ngx"));
-//            nginxPod.setPorts(List.of(80));
-//            nginxPod.setVolumes(Map.of("nginx-conf","/home/jking/IdeaProjects/backend/data/nginx/default.conf"));
-//            nginxPod.setVolumeMounts(Map.of("nginx-conf","/etc/nginx/conf.d/default.conf"));
-//            nginxPod.create(k3s.getCoreV1Api(),"default");
-            // nginx deployment
-//            K3sDeployment nginxDeployment = new K3sDeployment();
-//            nginxDeployment.setDeploymentName("ngx-dep");
-//            nginxDeployment.setReplicas(1);
-//            nginxDeployment.setMatchLabels(Map.of("app","ngx"));
-//
-//            // nginx template
-//            V1PodTemplateSpec templateSpec = new V1PodTemplateSpec();
-//            V1ObjectMeta meta = new V1ObjectMeta();
-//            meta.setLabels(Map.of("app","ngx"));
-//            templateSpec.setMetadata(meta);
-
-//            spec:
-//            containers:
-//            - name: ngx
-//            image: nginx:alpine
-//            imagePullPolicy: IfNotPresent
-//            ports:
-//            - containerPort: 80
-//            volumeMounts:
-//            - mountPath: /etc/nginx/conf.d
-//            name: ngx-conf
-//
-//            initContainers:
-//            - name: ngx-init
-//            image: busybox
-//            command: ['sh', '-c', 'shell']
-//            volumeMounts:
-//            - mountPath: /etc/nginx/conf.d
-//            name: ngx-conf
-//            volumes:
-//            - name: ngx-conf
-//            emptyDir: {}
-
-//            V1PodSpec podSpec = new V1PodSpec();
-//            podSpec.setContainers(List.of(new V1Container()
-//                    .name("nginx")
-//                    .image("nginx:alpine")
-//                    .imagePullPolicy("IfNotPresent")
-//                    .ports(List.of(new V1ContainerPort()
-//                            .containerPort(80)
-//                    ))
-//                    .volumeMounts(List.of(new V1VolumeMount()
-//                            .name("nginx-conf")
-//                            .mountPath("/etc/nginx/conf.d/default.conf")
-//                    ))
-//            ));
-
-            // get nginxFilePath and nginxFileName
-//            String nginxFilePath = nginxConf.getNginxFilePath();
-//            String nginxFileName = nginxConf.getNginxFileName();
-//
-//            String nginxHostPath = String.format("%s/%s/%s",System.getProperty("user.dir"),nginxFilePath,nginxFileName);
-//
-//
-//
-//            podSpec.setVolumes(List.of(new V1Volume()
-//                    .name("nginx-conf")
-//                    .hostPath(new V1HostPathVolumeSource()
-//                            .path(nginxHostPath)
-//                    )
-//            ));
-
-//            podSpec.setVolumes(List.of(new V1Volume()
-//                    .name("nginx-conf")
-//                    .emptyDir(new V1EmptyDirVolumeSource())
-//            ));
-//
-//            V1Container ngxContainer = new V1Container().name("ngx")
-//                    .image("nginx:alpine")
-//                    .imagePullPolicy("IfNotPresent")
-//                    .ports(List.of(new V1ContainerPort().containerPort(80)))
-//                    .volumeMounts(List.of(new V1VolumeMount().name("nginx-conf").mountPath("/etc/nginx/conf.d")));
-//            podSpec.setContainers(List.of(ngxContainer));
-
-            // read core shell from conf-gen.sh
-//            File file = new File("conf-gen.sh");
-//            FileReader fileReader = new FileReader(file);
-//            char[] buffer = new char[(int) file.length()];
-//            fileReader.read(buffer);
-//            fileReader.close();
-//            String shell = new String(buffer);
-//
-//            List<String> command = new ArrayList<>();
-//            command.add("sh");
-//            command.add("-c");
-//            command.add(shell);
-//            command.add("--");
-//            for (int num : existService){
-//                command.add(String.format("%d",num));
-//            }
-//
-//            V1Container ngxInitContainer = new V1Container().name("ngx-init")
-//                    .image("busybox")
-//                    .volumeMounts(List.of(new V1VolumeMount().name("nginx-conf").mountPath("/etc/nginx/conf.d")));
-//            ngxInitContainer.setCommand(command);
-//
-//            podSpec.setInitContainers(List.of(ngxInitContainer));
-//
-//            templateSpec.setSpec(podSpec);
-//
-//            nginxDeployment.create(k3s.getAppsV1Api(),"default",templateSpec);
-
+            
             // nginx service
-            K3sService nginxService = new K3sService();
-            nginxService.setServiceName("ngx-svc");
-            nginxService.setSelector(Map.of("app","ngx"));
-            nginxService.setPorts(List.of(new K3sServicePort(80,new IntOrString(80),"TCP")));
-            nginxService.create(k3s.getCoreV1Api(),"default");
+            createNginxService();
 
             // ingress
-            K3sIngress ingress = new K3sIngress();
-            ingress.create(k3s.getNetworkingV1Api(),"default");
+            createIngress();
         }
 
         return serviceNum;
     }
 
-    private boolean internalDelete(int num) throws Exception {
-
-        if (!existService.contains(num)){
-            return false;
-        }
-
+    private void deletePodByNum(int num) throws ApiException {
         // uos pod
         K3sPod pod = new K3sPod();
         // 通过num获取podName
@@ -398,44 +291,52 @@ public class UosService {
 
         // 在pod删除后，从existService中删除
         existService.remove(num);
+    }
 
-
+    private void deleteServiceByNum(int num) throws ApiException {
         // uos service
         K3sService service = new K3sService();
         service.setServiceName(String.format("uos-svc-%d",num));
         service.delete(k3s.getCoreV1Api(),"default");
+    }
 
-        // 删除pod时conf只需要删除upstream和location，但是不需要更改文件
-//        nginxConf.deleteUpstream(String.format("desktop-%d",num));
-//        nginxConf.deleteLocationPrefix(String.format("desktop-%d",num));
+    private void deleteNginxPod() throws ApiException {
+        K3sPod nginxPod = new K3sPod();
+        nginxPod.setPodName("ngx");
+        nginxPod.deleteForce(k3s.getCoreV1Api(),"default",0);
+    }
 
-        // delete nginx pod to reload nginx conf
-//        if (existService.size() > 1){
-//            V1PodList podList = k3s.listPod();
-//            for (var item : podList.getItems()){
-//                if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("ngx")){
-//                    K3sPod nginxPod = new K3sPod();
-//                    nginxPod.setPodName(item.getMetadata().getName());
-//                    nginxPod.deleteForce(k3s.getCoreV1Api(),"default",0);
-//                    break;
-//                }
-//            }
-//        }
+    private void deleteNginxService() throws ApiException {
+        K3sService nginxService = new K3sService();
+        nginxService.setServiceName("ngx-svc");
+        nginxService.delete(k3s.getCoreV1Api(),"default");
+    }
+
+    private void deleteIngress() throws Exception {
+        K3sIngress ingress = new K3sIngress();
+        ingress.delete(k3s.getNetworkingV1Api(),"default");
+    }
+
+    private boolean internalDelete(int num) throws Exception {
+
+        if (!existService.contains(num)){
+            return false;
+        }
+
+        // delete pod
+        deletePodByNum(num);
+        // delete service
+        deleteServiceByNum(num);
 
         if (existService.isEmpty()){
             // nginx pod
-            K3sPod nginxPod = new K3sPod();
-            nginxPod.setPodName("ngx");
-            nginxPod.deleteForce(k3s.getCoreV1Api(),"default",0);
+            deleteNginxPod();
 
             // nginx service
-            com.example.backend.k3s.K3sService nginxService = new com.example.backend.k3s.K3sService();
-            nginxService.setServiceName("ngx-svc");
-            nginxService.delete(k3s.getCoreV1Api(),"default");
+            deleteNginxService();
 
             // ingress
-            K3sIngress ingress = new K3sIngress();
-            ingress.delete(k3s.getNetworkingV1Api(),"default");
+            deleteIngress();
         }
 
         return true;
