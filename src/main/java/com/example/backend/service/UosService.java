@@ -2,6 +2,8 @@ package com.example.backend.service;
 
 
 import com.example.backend.dao.ConstantDao;
+import com.example.backend.dao.PodDao;
+import com.example.backend.entity.Pod;
 import com.example.backend.k3s.*;
 import com.example.backend.utils.NginxConf;
 import io.kubernetes.client.custom.IntOrString;
@@ -10,6 +12,7 @@ import io.kubernetes.client.openapi.models.*;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -36,10 +39,14 @@ public class UosService {
     private K3s k3s;
 
     @Autowired
+    @Qualifier("constantDaoImpl")
     private ConstantDao constant;
 
-//    @Autowired
-//    private NginxConf nginxConf;
+    @Autowired
+    @Qualifier("podDaoImpl")
+    private PodDao podDao;
+
+    private final String uosImageName = "uos";
 
     // TODO: 为了检查是否初始化，这里使用了一个flag，但是这样的实现方式不太好
     private boolean initFlag = false;
@@ -62,15 +69,24 @@ public class UosService {
         }
         log.info("maxContainerNum: {}",maxContainerNum);
 
-        V1PodList podList = k3s.listPod();
-        for (var item : podList.getItems()){
-            String containerName = item.getSpec().getContainers().get(0).getName();
-            if (containerName != null && containerName.startsWith("uos-")
-                    && item.getMetadata().getDeletionTimestamp() == null){
-                int num = Integer.parseInt(containerName.substring(4));
-                existService.add(num);
-            }
+//        V1PodList podList = k3s.listPod();
+//        for (var item : podList.getItems()){
+//            String containerName = item.getSpec().getContainers().get(0).getName();
+//            if (containerName != null && containerName.startsWith("uos-")
+//                    && item.getMetadata().getDeletionTimestamp() == null){
+//                int num = Integer.parseInt(containerName.substring(4));
+//                existService.add(num);
+//            }
+//        }
+
+        List<Pod> podList = podDao.listPods(uosImageName);
+        StringBuilder logStr = new StringBuilder("exist uos pod num list: [ ");
+        for (var item : podList){
+            existService.add(item.getPodId());
+            logStr.append(item.getPodId()).append(" ");
         }
+        logStr.append("]");
+        log.info(logStr.toString());
     }
     public int create(K3sPod pod) throws Exception {
         if (!initFlag){

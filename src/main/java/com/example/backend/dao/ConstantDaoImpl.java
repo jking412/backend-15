@@ -7,13 +7,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Repository
-public class Constant implements ConstantDao{
+public class ConstantDaoImpl implements ConstantDao{
 
     Map<String,Object> constantMap;
 
-    public Constant() {
+    public ConstantDaoImpl() {
         constantMap = new HashMap<>();
         constantMap.put("maxContainerNum",10);
+        constantMap.put("containerNameFormat","%s-%d");
+        // 获取podName的正则表达式
+        constantMap.put("podNameRegex","\\w+");
+        // 获取PodId的正则表达式
+        constantMap.put("podIdRegex","\\d+");
     }
 
     @Override
