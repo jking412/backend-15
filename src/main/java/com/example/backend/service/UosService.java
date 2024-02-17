@@ -3,6 +3,7 @@ package com.example.backend.service;
 
 import com.example.backend.dao.ConstantDao;
 import com.example.backend.dao.PodDao;
+import com.example.backend.dao.ScriptDao;
 import com.example.backend.entity.Pod;
 import com.example.backend.k3s.*;
 import io.kubernetes.client.custom.IntOrString;
@@ -44,6 +45,10 @@ public class UosService {
     @Autowired
     @Qualifier("podDaoImpl")
     private PodDao podDao;
+
+    @Autowired
+    @Qualifier("scriptDaoImpl")
+    private ScriptDao scriptDao;
 
     private final String uosImageName = "uos";
 
@@ -195,12 +200,7 @@ public class UosService {
 
         podSpec.setContainers(List.of(container));
         // nginx init container
-        File file = new File("conf-gen.sh");
-        FileReader fileReader = new FileReader(file);
-        char[] buffer = new char[(int) file.length()];
-        fileReader.read(buffer);
-        fileReader.close();
-        String shell = new String(buffer);
+        String shell = scriptDao.getScript("conf-gen.sh");
 
         List<String> command = new ArrayList<>();
         command.add("sh");
