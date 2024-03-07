@@ -1,11 +1,14 @@
 package com.example.backend.controller;
 
+import com.example.backend.entity.Pod;
 import com.example.backend.k3s.*;
 import com.example.backend.k3s.disk.Disk;
 import com.example.backend.service.DiskService;
 import com.example.backend.service.NetworkService;
 import com.example.backend.service.UosService;
 import com.google.protobuf.Api;
+import io.kubernetes.client.Metrics;
+import io.kubernetes.client.custom.PodMetricsList;
 import io.kubernetes.client.openapi.ApiException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -131,6 +134,13 @@ public class UosController {
             return Map.of("code",200,"msg","删除成功");
         }
         return Map.of("code",500,"msg","删除失败");
+    }
+
+    @GetMapping("metric")
+    public Map<Object,Object> metric() throws Exception {
+        Metrics metrics = new Metrics();
+        PodMetricsList podMetrics = metrics.getPodMetrics("default");
+        return Map.of("code",200,"msg", podMetrics);
     }
 
 }
