@@ -10,6 +10,7 @@ echo $VNC_PW | vncpasswd -f > /root/.vnc/passwd
 
 # 启动vnc服务
 vncserver \
+
     -localhost no \
     -geometry 1024x768 \
     -SecurityTypes VNCAUTH -passwd /root/.vnc/passwd \
