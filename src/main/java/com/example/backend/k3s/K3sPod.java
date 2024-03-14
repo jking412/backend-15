@@ -26,9 +26,12 @@ public class K3sPod {
     private String podName;
     private String hostName;
     private String containerName;
+
+    private Integer imageId;
     private String imageName;
     private String imagePullPolicy;
-    private Map<String,String> labels;
+
+    private Map<String, String> labels;
     private List<Integer> ports;
     // mountPath:Disk
     private Map<String, Disk> mountDisks;
