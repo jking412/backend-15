@@ -2,11 +2,14 @@ package com.example.backend.k3s;
 
 
 import io.kubernetes.client.custom.IntOrString;
+import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class Network {
@@ -36,6 +39,14 @@ public class Network {
         this.podLabel = podLabel;
     }
 
+    public List getAllNetworks(CoreV1Api coreV1Api, String namespace) throws ApiException {
+        List<Object> result = new ArrayList<>();
+        K3sService k3sService = new K3sService();
+        k3sService.setServiceName(name);
+        result = k3sService.list(coreV1Api, namespace);
+        return result;
+    }
+
     public void create(CoreV1Api api, String namespace) throws Exception {
         K3sService k3sService = new K3sService();
         k3sService.setServiceName(name);
@@ -55,4 +66,6 @@ public class Network {
         k3sService.setServiceName(name);
         k3sService.delete(api, namespace);
     }
+
+
 }

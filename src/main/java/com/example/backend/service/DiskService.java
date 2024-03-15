@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -97,6 +98,30 @@ public class DiskService {
 
         return file.delete();
     }
+    public List<String> getAllPodDiskPaths() {
+        List<String> diskNames = getAllDisks();
+        List<String> diskPaths = new ArrayList<>();
+        for (String diskName : diskNames) {
+            Disk disk = new Disk();
+            disk.setName(diskName);
+            String diskPath = getDiskPath(disk);
+            diskPaths.add(diskPath);
+        }
+        return diskPaths;
+    }
 
+    public List<String> getAllDisks() {
+        File file = new File(diskPath);
+        File[] files = file.listFiles();
+        List<String> diskNames = new ArrayList<>();
+        if (files != null) {
+            for (File f : files) {
+                if (f.isDirectory()) {
+                    diskNames.add(f.getName());
+                }
+            }
+        }
+        return diskNames;
+    }
 
 }
