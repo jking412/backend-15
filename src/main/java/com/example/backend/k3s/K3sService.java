@@ -63,6 +63,32 @@ public class K3sService {
     }
 
     public void delete(CoreV1Api api,String namespace) throws ApiException {
+        api.listNamespacedService(namespace, null, null, null, null, null, null, null, null, null, null).getItems().forEach(service -> {
+            if (service.getMetadata().getName().equals(serviceName)) {
+                try {
+                    api.deleteNamespacedService(serviceName, namespace, null, null, null, null, null, null);
+                } catch (ApiException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
         api.deleteNamespacedService(serviceName,namespace,null,null,null,null,null,null);
+    }
+
+    public List list(CoreV1Api api,String namespace) throws ApiException {
+        List result = new ArrayList();
+        api.listNamespacedService(namespace, null, null, null, null, null, null, null, null, null, null).getItems().forEach(service -> {
+            Map<String,Object> utilMap = new HashMap<>();
+            Map<String,String> utilMap2 = new HashMap<>();
+            utilMap2.put("Name", service.getMetadata().getName());
+            utilMap2.put("Labels", String.valueOf(service.getMetadata().getNamespace()));
+            utilMap2.put("CreateTime", String.valueOf(service.getMetadata().getCreationTimestamp()));
+            utilMap2.put("ClusterIP", String.valueOf(service.getSpec().getClusterIP()));
+            utilMap2.put("Port", String.valueOf(service.getSpec().getPorts().get(0).getPort()));
+            utilMap2.put("TargetPort", String.valueOf(service.getSpec().getPorts().get(0).getTargetPort()));
+            utilMap.put(service.getMetadata().getName(), utilMap2 );
+            result.add(utilMap);
+        });
+        return result;
     }
 }

@@ -122,7 +122,6 @@ public class UosService {
             }
         }
         return serviceNum;
-
     }
 
     private K3sPod createUosPod(K3sPod k3sPod,int serviceNum) throws ApiException {
