@@ -1,5 +1,7 @@
 package com.example.backend.k3s;
 
+import com.example.backend.entity.Network;
+import com.example.backend.service.INetworkService;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
@@ -7,14 +9,19 @@ import io.kubernetes.client.openapi.models.V1Service;
 import io.kubernetes.client.openapi.models.V1ServicePort;
 import io.kubernetes.client.openapi.models.V1ServiceSpec;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Data
+@Service
 public class K3sService {
+
 
     private String serviceName;
     private Map<String,String> selector;
@@ -51,12 +58,12 @@ public class K3sService {
                     .name(String.format("%d-%s", port.getPort(), port.getProtocol().toLowerCase()))
             );
         }
-
         V1ServiceSpec spec = new V1ServiceSpec();
         spec.setSelector(selector);
         spec.setPorts(ports);
         spec.setType(type);
         service.setSpec(spec);
+        Network network = new Network();
 
         // create k3s service
         api.createNamespacedService(namespace, service, null, null, null,null);
@@ -72,7 +79,6 @@ public class K3sService {
                 }
             }
         });
-        api.deleteNamespacedService(serviceName,namespace,null,null,null,null,null,null);
     }
 
     public List list(CoreV1Api api,String namespace) throws ApiException {
@@ -90,5 +96,21 @@ public class K3sService {
             result.add(utilMap);
         });
         return result;
+    }
+
+    public Network getNetwork(String name, CoreV1Api api) {
+        Network network = new Network();
+        try {
+            V1Service service = api.readNamespacedService(name, "default", null);
+            network.setServiceName(service.getMetadata().getName());
+            network.setClusterIp(service.getSpec().getClusterIP());
+            network.setTargetPort(String.valueOf(service.getSpec().getPorts().get(0).getTargetPort()));
+            network.setCreateTime(service.getMetadata().getCreationTimestamp().toLocalDateTime());
+            network.setPort(String.valueOf(service.getSpec().getPorts().get(0).getPort()));
+            network.setLabels(String.valueOf(service.getMetadata().getNamespace()));
+        } catch (ApiException e) {
+            e.printStackTrace();
+        }
+        return network;
     }
 }

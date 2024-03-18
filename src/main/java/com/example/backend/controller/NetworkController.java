@@ -1,6 +1,7 @@
 package com.example.backend.controller;
 
 import com.example.backend.Pojo.Result;
+import com.example.backend.k3s.K3s;
 import com.example.backend.k3s.Network;
 import com.example.backend.k3s.SecurityGroup;
 import com.example.backend.service.NetworkService;
@@ -30,6 +31,7 @@ public class NetworkController {
         }
         com.example.backend.k3s.Network network = new com.example.backend.k3s.Network(name,securityGroup,podId,podImage);
         networkService.create(network);
+        networkService.insert(network.getName());
         return Result.success(200,"创建成功");
     }
 

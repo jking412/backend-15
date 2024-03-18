@@ -5,6 +5,7 @@ import com.example.backend.service.DiskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.Map;
 
 @RestController

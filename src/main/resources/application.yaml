@@ -1,6 +1,14 @@
 k3s:
   max-container-num: 10
 
+spring:
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql://localhost:3306/os?useUnicode=true&characterEncoding=utf-8&useSSL=false
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+
 disk:
   path: "data/disk"
 
