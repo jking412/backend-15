@@ -1,13 +1,15 @@
 package com.example.backend.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.example.backend.entity.Volume;
 import com.example.backend.k3s.disk.Disk;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -15,6 +17,9 @@ public class DiskService {
 
    @Value("${disk.path}")
     private String diskPath;
+
+   @Autowired
+   private IVolumeService volumeService;
 
     public boolean create(Disk disk) {
         // 在diskPath下创建一个名为disk.getName()的文件夹，如果存在则报错
@@ -39,7 +44,14 @@ public class DiskService {
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         try {
             Process process = processBuilder.start();
-            // output stdout and stderr
+            process.waitFor();
+            Volume volume = new Volume();
+            volume.setVolumeName(disk.getName());
+            volume.setSizeMb((getDirectorySize(diskFile)/1024/1024));
+            if(!volumeService.saveOrUpdate(volume)){
+                return false;
+            }
+//             output stdout and stderr
 //            BufferedReader reader = new BufferedReader(new java.io.InputStreamReader(process.getInputStream()));
 //            BufferedReader errorReader = new BufferedReader(new java.io.InputStreamReader(process.getErrorStream()));
 //            String line;
@@ -50,8 +62,7 @@ public class DiskService {
 //            while ((line = errorReader.readLine()) != null) {
 //                System.out.println(line);
 //            }
-
-            process.waitFor();
+//
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -61,8 +72,14 @@ public class DiskService {
 
     public boolean delete(Disk disk) {
         // 删除diskPath/disk.getName()文件夹及其下所有文件
+
         File diskFile = new File(diskPath + "/" + disk.getName());
-        if (!diskFile.exists()) {
+
+        System.out.println(diskFile.exists()+" "+diskFile.isDirectory());
+        boolean flag = diskFile.canRead();
+        QueryWrapper<Volume> wrapper = new QueryWrapper<>();
+        wrapper.eq("volume_name",disk.getName());
+        if (!diskFile.getAbsoluteFile().exists() || volumeService.remove(wrapper)==false) {
             return false;
         }
         return deleteAllFileInDirectory(diskFile.getAbsolutePath());
@@ -98,30 +115,47 @@ public class DiskService {
 
         return file.delete();
     }
-    public List<String> getAllPodDiskPaths() {
-        List<String> diskNames = getAllDisks();
-        List<String> diskPaths = new ArrayList<>();
-        for (String diskName : diskNames) {
-            Disk disk = new Disk();
-            disk.setName(diskName);
-            String diskPath = getDiskPath(disk);
-            diskPaths.add(diskPath);
-        }
-        return diskPaths;
+
+    public List<Object> getAllPodDiskPaths() {
+        List<Object> disks = getAllDisks();
+        return disks;
     }
 
-    public List<String> getAllDisks() {
+    public List<Object> getAllDisks() {
         File file = new File(diskPath);
         File[] files = file.listFiles();
-        List<String> diskNames = new ArrayList<>();
+        List<Object> disks = new ArrayList<>();
         if (files != null) {
             for (File f : files) {
                 if (f.isDirectory()) {
-                    diskNames.add(f.getName());
+                    HashMap<String,String> index = new HashMap<>();
+                    index.put("name", f.getName());
+                    index.put("path", f.getAbsolutePath());
+                    index.put("size", getDirectorySize(f).toString());
+                    disks.add(index);
                 }
             }
         }
-        return diskNames;
+        return disks;
+    }
+
+    public static Long getDirectorySize(File directory) {
+        Long size = 0L;
+        if (directory.isDirectory()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile()) {
+                        size += file.length();
+                    } else {
+                        size += getDirectorySize(file);
+                    }
+                }
+            }
+        } else if (directory.isFile()) {
+            size += directory.length();
+        }
+        return size;
     }
 
 }

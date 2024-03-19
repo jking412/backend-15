@@ -5,7 +5,9 @@ import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -68,4 +70,10 @@ public class Network {
     }
 
 
+    public com.example.backend.entity.Network getNetwork(String name,CoreV1Api coreV1Api) {
+        K3sService k3sService = new K3sService();
+        com.example.backend.entity.Network network = new com.example.backend.entity.Network();
+        network = k3sService.getNetwork(name,coreV1Api);
+        return network;
+    }
 }
