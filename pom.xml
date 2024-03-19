@@ -93,12 +93,11 @@
 		</dependency>
 
 
-		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<version>8.0.28</version>
-		</dependency>
-
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>2.1.4</version>
+        </dependency>
 
 		<dependency>
 			<groupId>com.mysql</groupId>
@@ -108,7 +107,6 @@
 
 
         <!-- 解决kubernetes client 依赖问题 -->
-
 <!--		<dependency>-->
 <!--			<groupId>org.bouncycastle</groupId>-->
 <!--			<artifactId>bcprov-jdk18on</artifactId>-->
