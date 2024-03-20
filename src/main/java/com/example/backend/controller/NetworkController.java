@@ -31,7 +31,7 @@ public class NetworkController {
         }
         com.example.backend.k3s.Network network = new com.example.backend.k3s.Network(name,securityGroup,podId,podImage);
         networkService.create(network);
-        networkService.insert(network.getName());
+//        networkService.insert(network.getName());
         return Result.success(200,"创建成功");
     }
 

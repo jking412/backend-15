@@ -12,10 +12,10 @@ import java.math.BigDecimal;
  * </p>
  *
  * @author kunkun
- * @since 2024-03-18
+ * @since 2024-03-20
  */
 @TableName("pod_info")
-public class Pod implements Serializable {
+public class PodInfo implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -40,19 +40,9 @@ public class Pod implements Serializable {
 
     private Integer imageId;
 
-    private String imageName;
-
     private String imagePullPolicy;
 
     private String labels;
-
-    private String ports;
-
-    private String mountDisks;
-
-    private String volumes;
-
-    private String volumeMounts;
 
     public Integer getPodId() {
         return podId;
@@ -134,14 +124,6 @@ public class Pod implements Serializable {
         this.imageId = imageId;
     }
 
-    public String getImageName() {
-        return imageName;
-    }
-
-    public void setImageName(String imageName) {
-        this.imageName = imageName;
-    }
-
     public String getImagePullPolicy() {
         return imagePullPolicy;
     }
@@ -158,41 +140,9 @@ public class Pod implements Serializable {
         this.labels = labels;
     }
 
-    public String getPorts() {
-        return ports;
-    }
-
-    public void setPorts(String ports) {
-        this.ports = ports;
-    }
-
-    public String getMountDisks() {
-        return mountDisks;
-    }
-
-    public void setMountDisks(String mountDisks) {
-        this.mountDisks = mountDisks;
-    }
-
-    public String getVolumes() {
-        return volumes;
-    }
-
-    public void setVolumes(String volumes) {
-        this.volumes = volumes;
-    }
-
-    public String getVolumeMounts() {
-        return volumeMounts;
-    }
-
-    public void setVolumeMounts(String volumeMounts) {
-        this.volumeMounts = volumeMounts;
-    }
-
     @Override
     public String toString() {
-        return "Pod{" +
+        return "PodInfo{" +
             "podId = " + podId +
             ", cpuReq = " + cpuReq +
             ", cpuLimit = " + cpuLimit +
@@ -203,13 +153,8 @@ public class Pod implements Serializable {
             ", hostName = " + hostName +
             ", containerName = " + containerName +
             ", imageId = " + imageId +
-            ", imageName = " + imageName +
             ", imagePullPolicy = " + imagePullPolicy +
             ", labels = " + labels +
-            ", ports = " + ports +
-            ", mountDisks = " + mountDisks +
-            ", volumes = " + volumes +
-            ", volumeMounts = " + volumeMounts +
         "}";
     }
 }

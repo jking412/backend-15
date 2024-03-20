@@ -11,10 +11,10 @@ import java.io.Serializable;
  * </p>
  *
  * @author kunkun
- * @since 2024-03-18
+ * @since 2024-03-20
  */
 @TableName("user_info")
-public class User implements Serializable {
+public class UserInfo implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -61,7 +61,7 @@ public class User implements Serializable {
 
     @Override
     public String toString() {
-        return "User{" +
+        return "UserInfo{" +
             "userId = " + userId +
             ", username = " + username +
             ", email = " + email +

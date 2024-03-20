@@ -70,10 +70,10 @@ public class Network {
     }
 
 
-    public com.example.backend.entity.Network getNetwork(String name,CoreV1Api coreV1Api) {
-        K3sService k3sService = new K3sService();
-        com.example.backend.entity.Network network = new com.example.backend.entity.Network();
-        network = k3sService.getNetwork(name,coreV1Api);
-        return network;
-    }
+//    public com.example.backend.entity.Network getNetwork(String name,CoreV1Api coreV1Api) {
+//        K3sService k3sService = new K3sService();
+//        com.example.backend.entity.Network network = new com.example.backend.entity.Network();
+//        network = k3sService.getNetwork(name,coreV1Api);
+//        return network;
+//    }
 }

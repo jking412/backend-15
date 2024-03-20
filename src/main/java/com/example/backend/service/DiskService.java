@@ -1,7 +1,6 @@
 package com.example.backend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.example.backend.entity.Volume;
 import com.example.backend.k3s.disk.Disk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,9 +16,9 @@ public class DiskService {
 
    @Value("${disk.path}")
     private String diskPath;
-
-   @Autowired
-   private IVolumeService volumeService;
+//
+//   @Autowired
+//   private VolumeMapper volumeMapper;
 
     public boolean create(Disk disk) {
         // 在diskPath下创建一个名为disk.getName()的文件夹，如果存在则报错
@@ -45,12 +44,12 @@ public class DiskService {
         try {
             Process process = processBuilder.start();
             process.waitFor();
-            Volume volume = new Volume();
-            volume.setVolumeName(disk.getName());
-            volume.setSizeMb((getDirectorySize(diskFile)/1024/1024));
-            if(!volumeService.saveOrUpdate(volume)){
-                return false;
-            }
+//            Volume volume = new Volume();
+//            volume.setVolumeName(disk.getName());
+//            volume.setSizeMb((getDirectorySize(diskFile)/1024/1024));
+//            if(volumeMapper.insert(volume) <= 0){
+//                return false;
+//            }
 //             output stdout and stderr
 //            BufferedReader reader = new BufferedReader(new java.io.InputStreamReader(process.getInputStream()));
 //            BufferedReader errorReader = new BufferedReader(new java.io.InputStreamReader(process.getErrorStream()));
@@ -77,11 +76,11 @@ public class DiskService {
 
         System.out.println(diskFile.exists()+" "+diskFile.isDirectory());
         boolean flag = diskFile.canRead();
-        QueryWrapper<Volume> wrapper = new QueryWrapper<>();
-        wrapper.eq("volume_name",disk.getName());
-        if (!diskFile.getAbsoluteFile().exists() || volumeService.remove(wrapper)==false) {
-            return false;
-        }
+//        QueryWrapper<Volume> wrapper = new QueryWrapper<>();
+//        wrapper.eq("volume_name",disk.getName());
+//        if (!diskFile.getAbsoluteFile().exists() || volumeMapper.delete(wrapper) <= 0) {
+//            return false;
+//        }
         return deleteAllFileInDirectory(diskFile.getAbsolutePath());
     }
 

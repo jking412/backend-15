@@ -1,6 +1,6 @@
 package com.example.backend.mapper;
 
-import com.example.backend.entity.Pod;
+import com.example.backend.entity.VolumeInfo;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
@@ -9,8 +9,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * </p>
  *
  * @author kunkun
- * @since 2024-03-18
+ * @since 2024-03-20
  */
-public interface PodMapper extends BaseMapper<Pod> {
+public interface VolumeInfoMapper extends BaseMapper<VolumeInfo> {
 
 }

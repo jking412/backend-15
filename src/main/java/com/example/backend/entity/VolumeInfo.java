@@ -11,10 +11,10 @@ import java.io.Serializable;
  * </p>
  *
  * @author kunkun
- * @since 2024-03-18
+ * @since 2024-03-20
  */
 @TableName("volume_info")
-public class Volume implements Serializable {
+public class VolumeInfo implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -22,6 +22,12 @@ public class Volume implements Serializable {
     private Integer volumeId;
 
     private String volumeName;
+
+    private Integer podId;
+
+    private Integer podName;
+
+    private Integer podPath;
 
     private Long sizeMb;
 
@@ -41,6 +47,30 @@ public class Volume implements Serializable {
         this.volumeName = volumeName;
     }
 
+    public Integer getPodId() {
+        return podId;
+    }
+
+    public void setPodId(Integer podId) {
+        this.podId = podId;
+    }
+
+    public Integer getPodName() {
+        return podName;
+    }
+
+    public void setPodName(Integer podName) {
+        this.podName = podName;
+    }
+
+    public Integer getPodPath() {
+        return podPath;
+    }
+
+    public void setPodPath(Integer podPath) {
+        this.podPath = podPath;
+    }
+
     public Long getSizeMb() {
         return sizeMb;
     }
@@ -51,9 +81,12 @@ public class Volume implements Serializable {
 
     @Override
     public String toString() {
-        return "Volume{" +
+        return "VolumeInfo{" +
             "volumeId = " + volumeId +
             ", volumeName = " + volumeName +
+            ", podId = " + podId +
+            ", podName = " + podName +
+            ", podPath = " + podPath +
             ", sizeMb = " + sizeMb +
         "}";
     }
