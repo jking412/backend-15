@@ -1,6 +1,7 @@
 package com.example.backend.k3s;
 
 
+import com.example.backend.configure.Constants;
 import com.example.backend.entity.NetworkInfo;
 import com.example.backend.mapper.NetworkInfoMapper;
 import io.kubernetes.client.custom.IntOrString;
@@ -57,7 +58,7 @@ public class Network {
         k3sService.setSelector(new HashMap<>(){{
             put("app", podLabel);
         }});
-        k3sService.setType(K3sService.ClusterIP);
+        k3sService.setType(Constants.CLUSTER_IP);
         List<SecurityGroupPort> ports = securityGroup.getPorts();
         for(SecurityGroupPort port : ports){
             k3sService.getPorts().add(new K3sServicePort(port.getPort(), new IntOrString(port.getPort()), port.getProtocol()));

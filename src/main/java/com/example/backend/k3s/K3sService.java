@@ -1,5 +1,6 @@
 package com.example.backend.k3s;
 
+import com.example.backend.configure.Constants;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
@@ -24,10 +25,6 @@ public class K3sService {
     private List<K3sServicePort> ports;
     private String type;
 
-    public static String ClusterIP = "ClusterIP";
-    public static String NodePort = "NodePort";
-    public static String LoadBalancer = "LoadBalancer";
-
     public K3sService(){
         this.selector = new HashMap<>();
         this.ports = new ArrayList<>();
@@ -36,8 +33,8 @@ public class K3sService {
     public void create(CoreV1Api api,String namespace) throws ApiException {
 
         V1Service service = new V1Service();
-        service.setApiVersion("v1");
-        service.setKind("Service");
+        service.setApiVersion(Constants.V1_API_VERSION);
+        service.setKind(Constants.SERVICE_KIND);
 
         V1ObjectMeta meta = new V1ObjectMeta();
         meta.setName(serviceName);

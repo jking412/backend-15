@@ -1,5 +1,6 @@
 package com.example.backend.k3s;
 
+import com.example.backend.configure.Constants;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
@@ -25,8 +26,8 @@ public class K3sDeployment {
     public void create(AppsV1Api api, String namespace, V1PodTemplateSpec podTemplateSpec) throws ApiException {
         // create deployment object
         var deployment = new io.kubernetes.client.openapi.models.V1Deployment();
-        deployment.setApiVersion("apps/v1");
-        deployment.setKind("Deployment");
+        deployment.setApiVersion(Constants.DEFAULT_API_VERSION);
+        deployment.setKind(Constants.DEPLOYMENT_KIND);
 
         // create metadata
         var meta = new io.kubernetes.client.openapi.models.V1ObjectMeta();

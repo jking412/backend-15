@@ -1,6 +1,7 @@
 package com.example.backend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.example.backend.configure.Constants;
 import com.example.backend.entity.NetworkInfo;
 import com.example.backend.k3s.K3s;
 import com.example.backend.k3s.Network;
@@ -23,8 +24,8 @@ public class NetworkService {
     private NetworkInfoMapper networkInfoMapper;
 
     public void create(Network network) throws Exception {
-        network.create(k3s.getCoreV1Api(),"default");
-        V1Service service = k3s.getCoreV1Api().readNamespacedService(network.getName(), "default", null);
+        network.create(k3s.getCoreV1Api(), Constants.DEFAULT);
+        V1Service service = k3s.getCoreV1Api().readNamespacedService(network.getName(), Constants.DEFAULT, null);
 
         //insert into database
         //todo:添加安全组 和 podID
@@ -38,7 +39,7 @@ public class NetworkService {
 
     public void delete(String networkName) throws Exception {
         Network network = new Network(networkName,null,0,"");
-        network.delete(k3s.getCoreV1Api(),"default");
+        network.delete(k3s.getCoreV1Api(),Constants.DEFAULT);
         deleteInDatabase(networkName);
     }
 
@@ -51,7 +52,7 @@ public class NetworkService {
         List<Object> result = new ArrayList<>();
         Network network = new Network("",null,0,"","");
         try {
-            result = network.getAllNetworks(k3s.getCoreV1Api(), "default");
+            result = network.getAllNetworks(k3s.getCoreV1Api(), Constants.DEFAULT);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -1,6 +1,7 @@
 package com.example.backend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.example.backend.configure.Constants;
 import com.example.backend.entity.Images;
 import com.example.backend.entity.PodInfo;
 import com.example.backend.k3s.K3s;
@@ -33,10 +34,9 @@ public class PodService {
     @Autowired
     private IImagesService imagesService;
 
-    public static String uosImage = "uos";
 
     public int create(K3sPod k3sPod) throws Exception{
-        if (k3sPod.getImageName().equals(uosImage)){
+        if (k3sPod.getImageName().equals(Constants.UOS_IMAGE_NAME)){
             return uosService.create(k3sPod);
         }
         return -1;
@@ -105,7 +105,7 @@ public class PodService {
     }
 
     public boolean delete(String imageName,int num) throws Exception{
-        if (imageName.equals(uosImage)){
+        if (imageName.equals(Constants.UOS_IMAGE_NAME)){
             return uosService.delete(num);
         }
         return false;

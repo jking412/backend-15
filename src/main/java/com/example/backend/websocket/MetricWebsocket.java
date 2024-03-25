@@ -1,5 +1,6 @@
 package com.example.backend.websocket;
 
+import com.example.backend.configure.Constants;
 import io.kubernetes.client.Metrics;
 import io.kubernetes.client.openapi.ApiException;
 import jakarta.websocket.OnMessage;
@@ -28,7 +29,7 @@ public class MetricWebsocket {
 
     public void sendMessage(String message) throws IOException, ApiException {
         Metrics metrics = new Metrics();
-        metrics.getPodMetrics("default");
+        metrics.getPodMetrics(Constants.DEFAULT);
         
     }
 }

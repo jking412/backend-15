@@ -1,6 +1,7 @@
 package com.example.backend.service;
 
 
+import com.example.backend.configure.Constants;
 import com.example.backend.dao.ConstantDao;
 import com.example.backend.dao.PodDao;
 import com.example.backend.dao.ScriptDao;
@@ -133,6 +134,9 @@ public class UosService {
     private K3sPod createUosPod(K3sPod k3sPod,int serviceNum) throws ApiException {
         K3sPod pod = new K3sPod();
 
+        pod.setMemoryReq(k3sPod.getMemoryReq());
+        pod.setMemoryLimit(k3sPod.getMemoryLimit());
+
         // 如果containerName不为空，就使用containerName，否则使用uos-编号
         if (k3sPod.getPodName() != null && !k3sPod.getPodName().isEmpty()){
             pod.setPodName(k3sPod.getPodName());
@@ -141,16 +145,13 @@ public class UosService {
         }
 
         pod.setContainerName(String.format("uos-%d",serviceNum));
-        pod.setImageName("uos:v0.2.0");
+        pod.setImageName(Constants.UOS_VERSION_2_0);
         pod.setLabels(Map.of("app",String.format("uos-%d",serviceNum)));
-        pod.setPorts(List.of(6080));
+        pod.setPorts(List.of(Constants.UOS_PORT));
 
         // 设置资源
         pod.setCpuReq(k3sPod.getCpuReq());
         pod.setCpuLimit(k3sPod.getCpuLimit());
-        pod.setMemoryReq(k3sPod.getMemoryReq());
-        pod.setMemoryLimit(k3sPod.getMemoryLimit());
-
         // 设置密码
         pod.setPasswd(k3sPod.getPasswd());
 
@@ -159,7 +160,7 @@ public class UosService {
             pod.setMountDisks(k3sPod.getMountDisks());
         }
 
-        pod.create(k3s.getCoreV1Api(),"default");
+        pod.create(k3s.getCoreV1Api(),Constants.DEFAULT);
 
         // 在pod创建后，将编号加入existService
         existService.add(serviceNum);
@@ -171,8 +172,8 @@ public class UosService {
         K3sService service = new K3sService();
         service.setServiceName(String.format("uos-svc-%d",serviceNum));
         service.setSelector(Map.of("app",String.format("uos-%d",serviceNum)));
-        service.setPorts(List.of(new K3sServicePort(80,new IntOrString(6080),"TCP")));
-        service.create(k3s.getCoreV1Api(),"default");
+        service.setPorts(List.of(new K3sServicePort(80,new IntOrString(6080),Constants.TCP)));
+        service.create(k3s.getCoreV1Api(),Constants.DEFAULT);
     }
 
     private void deleteNginxPodIfExist() throws ApiException {
@@ -181,7 +182,7 @@ public class UosService {
             if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("ngx")){
                 K3sPod nginxPod = new K3sPod();
                 nginxPod.setPodName(item.getMetadata().getName());
-                nginxPod.deleteForce(k3s.getCoreV1Api(),"default",0);
+                nginxPod.deleteForce(k3s.getCoreV1Api(),Constants.DEFAULT,0);
                 break;
             }
         }
@@ -198,8 +199,8 @@ public class UosService {
 
         // nginx container
         V1Container container = new V1Container().name("nginx")
-                .image("nginx:alpine")
-                .imagePullPolicy("IfNotPresent")
+                .image(Constants.NGINX_IMAGE_NAME)
+                .imagePullPolicy(Constants.DEFAULT_POLICY)
                 .ports(List.of(new V1ContainerPort().containerPort(80)))
                 .volumeMounts(List.of(new V1VolumeMount().name("nginx-conf").mountPath("/etc/nginx/conf.d")));
 
@@ -217,8 +218,8 @@ public class UosService {
         }
 
         V1Container ngxInitContainer = new V1Container().name("ngx-init")
-                .image("busybox")
-                .imagePullPolicy("IfNotPresent")
+                .image(Constants.BUSYBOX_IMAGE_NAME)
+                .imagePullPolicy(Constants.DEFAULT_POLICY)
                 .volumeMounts(List.of(new V1VolumeMount().name("nginx-conf").mountPath("/etc/nginx/conf.d")));
         ngxInitContainer.setCommand(command);
 
@@ -230,7 +231,7 @@ public class UosService {
         podSpec.setContainers(List.of(container));
         nginxPod.setSpec(podSpec);
 
-        k3s.getCoreV1Api().createNamespacedPod("default",nginxPod,null,null,null,null);
+        k3s.getCoreV1Api().createNamespacedPod(Constants.DEFAULT,nginxPod,null,null,null,null);
     }
 
     private void createNginxService() throws ApiException {
@@ -238,12 +239,12 @@ public class UosService {
         nginxService.setServiceName("ngx-svc");
         nginxService.setSelector(Map.of("app","ngx"));
         nginxService.setPorts(List.of(new K3sServicePort(80,new IntOrString(80),"TCP")));
-        nginxService.create(k3s.getCoreV1Api(),"default");
+        nginxService.create(k3s.getCoreV1Api(),Constants.DEFAULT);
     }
 
     private void createIngress() throws Exception {
         K3sIngress ingress = new K3sIngress();
-        ingress.create(k3s.getNetworkingV1Api(),"default");
+        ingress.create(k3s.getNetworkingV1Api(),Constants.DEFAULT);
     }
 
 
@@ -292,7 +293,7 @@ public class UosService {
             }
         }
         // deleteForce 会保证pod在3s内被删除
-        pod.deleteForce(k3s.getCoreV1Api(),"default",0);
+        pod.deleteForce(k3s.getCoreV1Api(),Constants.DEFAULT,0);
 
         // 在pod删除后，从existService中删除
         existService.remove(num);
@@ -302,24 +303,24 @@ public class UosService {
         // uos service
         K3sService service = new K3sService();
         service.setServiceName(String.format("uos-svc-%d",num));
-        service.delete(k3s.getCoreV1Api(),"default");
+        service.delete(k3s.getCoreV1Api(),Constants.DEFAULT);
     }
 
     private void deleteNginxPod() throws ApiException {
         K3sPod nginxPod = new K3sPod();
         nginxPod.setPodName("ngx");
-        nginxPod.deleteForce(k3s.getCoreV1Api(),"default",0);
+        nginxPod.deleteForce(k3s.getCoreV1Api(),Constants.DEFAULT,0);
     }
 
     private void deleteNginxService() throws ApiException {
         K3sService nginxService = new K3sService();
         nginxService.setServiceName("ngx-svc");
-        nginxService.delete(k3s.getCoreV1Api(),"default");
+        nginxService.delete(k3s.getCoreV1Api(),Constants.DEFAULT);
     }
 
     private void deleteIngress() throws Exception {
         K3sIngress ingress = new K3sIngress();
-        ingress.delete(k3s.getNetworkingV1Api(),"default");
+        ingress.delete(k3s.getNetworkingV1Api(),Constants.DEFAULT);
     }
 
     private boolean internalDelete(int num) throws Exception {

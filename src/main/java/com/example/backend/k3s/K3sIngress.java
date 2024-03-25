@@ -1,5 +1,6 @@
 package com.example.backend.k3s;
 
+import com.example.backend.configure.Constants;
 import io.kubernetes.client.openapi.apis.NetworkingV1Api;
 import io.kubernetes.client.openapi.models.*;
 import io.kubernetes.client.proto.V1Networking;
@@ -34,13 +35,13 @@ public class K3sIngress {
         //    apiVersion: networking.k8s.io/v1
         //    kind: Ingress
         this.ingress = new V1Ingress();
-        ingress.setApiVersion("networking.k8s.io/v1");
-        ingress.setKind("Ingress");
+        ingress.setApiVersion(Constants.K8S_API_VERSION);
+        ingress.setKind(Constants.INGRESS_KIND);
 
         //    metadata:
         //      name: os-ingress
         V1ObjectMeta meta = new V1ObjectMeta();
-        meta.setName(ingressName);
+        meta.setName(Constants.INGRESS_NAME);
         ingress.setMetadata(meta);
 
         // spec:
@@ -56,7 +57,7 @@ public class K3sIngress {
             //  pathType: Prefix
             V1HTTPIngressPath path = new V1HTTPIngressPath();
             path.setPath("/env");
-            path.setPathType("Prefix");
+            path.setPathType(Constants.DEFAULT_PATH_TYPE);
 
             {
                 //  backend:
@@ -64,12 +65,12 @@ public class K3sIngress {
                 //  name:  ngx-svc
                 V1IngressBackend backend = new V1IngressBackend();
                 V1IngressServiceBackend serviceBackend = new V1IngressServiceBackend();
-                serviceBackend.setName("ngx-svc");
+                serviceBackend.setName(Constants.NGX_SVC);
                 {
                     //   port:
                     //   number: 80
                     V1ServiceBackendPort serviceBackendPort = new V1ServiceBackendPort();
-                    serviceBackendPort.setNumber(80);
+                    serviceBackendPort.setNumber(Constants.DEFAULT_NGX_SERVICE_PORT);
                     serviceBackend.setPort(serviceBackendPort);
                 }
 
@@ -94,6 +95,6 @@ public class K3sIngress {
     }
 
     public void delete(NetworkingV1Api api, String namespace) throws Exception {
-        api.deleteNamespacedIngress(ingressName,namespace,null,null,null,null,null,null);
+        api.deleteNamespacedIngress(Constants.INGRESS_NAME,namespace,null,null,null,null,null,null);
     }
 }

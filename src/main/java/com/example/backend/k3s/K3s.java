@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+import com.example.backend.configure.Constants;
+
 @Data
 @Component
 public class K3s {
@@ -27,7 +29,7 @@ public class K3s {
         ApiClient client = null;
 
         try {
-            client = Config.fromConfig("config");
+            client = Config.fromConfig(Constants.CONFIG);
         }catch (IOException e){
             try{
                 client = Config.fromCluster();
@@ -45,7 +47,7 @@ public class K3s {
     }
 
     public V1PodList listPod() throws ApiException {
-        return coreV1Api.listNamespacedPod("default",null,null,null,null,null,null,
+        return coreV1Api.listNamespacedPod(Constants.DEFAULT,null,null,null,null,null,null,
                 null,null,null,null);
 
     }
