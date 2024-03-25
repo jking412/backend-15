@@ -14,3 +14,12 @@ spec:
                 name:  ngx-svc
                 port:
                   number: 80
+    - http:
+        paths:
+          - path: /kylin
+            pathType: Prefix
+            backend:
+              service:
+                name:  kylin-svc
+                port:
+                  number: 6444

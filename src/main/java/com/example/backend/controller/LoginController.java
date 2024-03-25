@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,6 +41,7 @@ public class LoginController {
             return Result.success(200,"注册成功");
         }
     }
+
 
     @PostMapping("/logout")
     public Result logout(){

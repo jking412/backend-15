@@ -8,8 +8,10 @@ fi
 # 设置vnc密码
 echo $VNC_PW | vncpasswd -f > /root/.vnc/passwd
 
+rm -rf /tmp/.X1-lock
+
 # 启动vnc服务
-vncserver \
+sudo vncserver \
     -localhost no \
     -geometry 1024x768 \
     -SecurityTypes VNCAUTH -passwd /root/.vnc/passwd \
@@ -19,3 +21,4 @@ vncserver \
 websockify --web /usr/share/novnc/ \
     6080 \
     localhost:5901
+

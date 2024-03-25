@@ -24,7 +24,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Data
 @Slf4j
 @Service
-public class UosService {
+public class KylinService {
 
     private Set<Integer> existService;
 
@@ -48,7 +48,7 @@ public class UosService {
     @Qualifier("scriptDaoImpl")
     private ScriptDao scriptDao;
 
-    private final String uosImageName = "uos";
+    private final String kylinImageName = "kylin";
 
     // TODO: 为了检查是否初始化，这里使用了一个flag，但是这样的实现方式不太好
     private boolean initFlag = false;
@@ -56,7 +56,7 @@ public class UosService {
 
 
 
-    public UosService()  {
+    public KylinService()  {
         // TODO: 注入在构造函数中的存在问题，k3s不能使用Autowired注入
         existService = new HashSet<>();
         lock = new ReentrantLock();
@@ -71,7 +71,7 @@ public class UosService {
         }
         log.info("maxContainerNum: {}",maxContainerNum);
 
-        List<Pod_old> podOldList = podDao.listPods(uosImageName);
+        List<Pod_old> podOldList = podDao.listPods(kylinImageName);
         StringBuilder logStr = new StringBuilder("exist uos pod num list: [ ");
         for (var item : podOldList){
             existService.add(item.getPodId());
@@ -122,20 +122,20 @@ public class UosService {
         return serviceNum;
     }
 
-    private K3sPod createUosPod(K3sPod k3sPod,int serviceNum) throws ApiException {
+    private K3sPod createKylinPod(K3sPod k3sPod,int serviceNum) throws ApiException {
         K3sPod pod = new K3sPod();
 
-        // 如果containerName不为空，就使用containerName，否则使用uos-编号
+        // 如果containerName不为空，就使用containerName，否则使用kylin-编号
         if (k3sPod.getPodName() != null && !k3sPod.getPodName().isEmpty()){
             pod.setPodName(k3sPod.getPodName());
         }else {
-            pod.setPodName(String.format("uos-%d",serviceNum));
+            pod.setPodName(String.format("kylin-%d",serviceNum));
         }
 
-        pod.setContainerName(String.format("uos-%d",serviceNum));
+        pod.setContainerName(String.format("kylin-%d",serviceNum));
         pod.setImageName("kylin:v0.2.0");
-        pod.setLabels(Map.of("app",String.format("uos-%d",serviceNum)));
-        pod.setPorts(List.of(6080));
+        pod.setLabels(Map.of("app",String.format("kylin-%d",serviceNum)));
+        pod.setPorts(List.of(8444));
 
         // 设置资源
         pod.setCpuReq(k3sPod.getCpuReq());
@@ -159,11 +159,11 @@ public class UosService {
         return pod;
     }
 
-    private void createUosService(K3sPod k3sPod,int serviceNum) throws ApiException {
+    private void createKylinService(K3sPod k3sPod,int serviceNum) throws ApiException {
         K3sService service = new K3sService();
-        service.setServiceName(String.format("uos-svc-%d",serviceNum));
-        service.setSelector(Map.of("app",String.format("uos-%d",serviceNum)));
-        service.setPorts(List.of(new K3sServicePort(80,new IntOrString(6080),"TCP")));
+        service.setServiceName(String.format("kylin-svc-%d",serviceNum));
+        service.setSelector(Map.of("app",String.format("kylin-%d",serviceNum)));
+        service.setPorts(List.of(new K3sServicePort(80,new IntOrString(8444),"TCP")));
         service.create(k3s.getCoreV1Api(),"default");
     }
 
@@ -197,7 +197,7 @@ public class UosService {
 
         podSpec.setContainers(List.of(container));
         // nginx init container
-        String shell = scriptDao.getScript("conf-gen.sh");
+        String shell = scriptDao.getScript("kylin-gen.sh");
 
         List<String> command = new ArrayList<>();
         command.add("sh");
@@ -247,11 +247,11 @@ public class UosService {
 
         int serviceNum = randomServiceNum();
 
-        // uos pod
-        K3sPod pod = createUosPod(k3sPod,serviceNum);
+        // kylin pod
+        K3sPod pod = createKylinPod(k3sPod,serviceNum);
 
-        // uos service
-        createUosService(pod,serviceNum);
+        // kylin service
+        createKylinService(pod,serviceNum);
 
         // if exist nginx pod, delete it
         deleteNginxPodIfExist();
@@ -273,7 +273,7 @@ public class UosService {
     }
 
     private void deletePodByNum(int num) throws ApiException {
-        // uos pod
+        // kylin pod
         K3sPod pod = new K3sPod();
         // 通过num获取podName
         List<K3sPod> list = list();
@@ -291,9 +291,9 @@ public class UosService {
     }
 
     private void deleteServiceByNum(int num) throws ApiException {
-        // uos service
+        // kylin service
         K3sService service = new K3sService();
-        service.setServiceName(String.format("uos-svc-%d",num));
+        service.setServiceName(String.format("kylin-svc-%d",num));
         service.delete(k3s.getCoreV1Api(),"default");
     }
 
@@ -344,7 +344,7 @@ public class UosService {
         List<K3sPod> list = new ArrayList<>();
 
         for (var item : podList.getItems()){
-//            if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("uos-") &&
+//            if (item.getMetadata().getName() != null && item.getMetadata().getName().startsWith("kylin-") &&
 //                item.getMetadata().getDeletionTimestamp() == null){
 //                // get num
 //                String podName = item.getMetadata().getName();
@@ -353,7 +353,7 @@ public class UosService {
 //            }
 
             String containerName = item.getSpec().getContainers().get(0).getName();
-            if (containerName != null && containerName.startsWith("uos-") &&
+            if (containerName != null && containerName.startsWith("kylin-") &&
                     item.getMetadata().getDeletionTimestamp() == null){
 //                int num = Integer.parseInt(containerName.substring(4));
 //                pod.setPodId(num);
