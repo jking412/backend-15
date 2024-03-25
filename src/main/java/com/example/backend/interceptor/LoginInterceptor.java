@@ -1,6 +1,6 @@
 package com.example.backend.interceptor;
 
-import com.example.backend.Pojo.Result;
+import com.example.backend.entity.Result;
 import com.example.backend.utils.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

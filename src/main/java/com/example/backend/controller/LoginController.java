@@ -1,6 +1,6 @@
 package com.example.backend.controller;
 
-import com.example.backend.Pojo.Result;
+import com.example.backend.entity.Result;
 import com.example.backend.entity.UserInfo;
 import com.example.backend.service.LoginService;
 import com.example.backend.utils.JwtUtils;
@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,6 +41,7 @@ public class LoginController {
             return Result.success(200,"注册成功");
         }
     }
+
 
     @PostMapping("/logout")
     public Result logout(){

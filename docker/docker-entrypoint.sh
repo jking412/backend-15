@@ -3,7 +3,6 @@
 # 启动vnc服务
 vncserver \
     -localhost no \
-    -geometry 1024x768 \
     -SecurityTypes None --I-KNOW-THIS-IS-INSECURE \
     :1
 
