@@ -1,7 +1,8 @@
 package com.example.backend.k3s;
 
 
-import com.example.backend.Pojo.K3sPodConfig;
+import com.example.backend.configure.Constants;
+import com.example.backend.entity.K3sPodConfig;
 import com.example.backend.k3s.disk.Disk;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
@@ -43,10 +44,9 @@ public class K3sPod {
     // volumeName: mountPath
     // name:mountPath
     private Map<String,String> volumeMounts;
-    static String defaultPolicy = "IfNotPresent";
 
     public K3sPod(){
-        imagePullPolicy = defaultPolicy;
+        imagePullPolicy = Constants.DEFAULT_POLICY;
 
         this.labels = new HashMap<>();
         this.volumes = new HashMap<>();
@@ -185,8 +185,8 @@ public class K3sPod {
 
         // create pod object
         V1Pod pod = new V1Pod();
-        pod.setApiVersion("v1");
-        pod.setKind("Pod");
+        pod.setApiVersion(Constants.V1_API_VERSION);
+        pod.setKind(Constants.POD_KIND);
 
         // create metadata
         V1ObjectMeta meta = new V1ObjectMeta();
@@ -240,7 +240,7 @@ public class K3sPod {
         if (passwd != null && !passwd.equals("")){
             List<V1EnvVar> env = new ArrayList<>();
             env.add(new V1EnvVar()
-                    .name("VNC_PW")
+                    .name(Constants.VNC_NAME)
                     .value(passwd)
             );
             container.setEnv(env);

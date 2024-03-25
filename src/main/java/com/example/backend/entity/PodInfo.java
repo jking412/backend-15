@@ -3,8 +3,18 @@ package com.example.backend.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.example.backend.utils.Regexp;
+import io.kubernetes.client.custom.Quantity;
+import io.kubernetes.client.openapi.models.*;
+import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.annotation.Resource;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * <p>
@@ -14,8 +24,11 @@ import java.math.BigDecimal;
  * @author kunkun
  * @since 2024-03-20
  */
+
 @TableName("pod_info")
+@NoArgsConstructor
 public class PodInfo implements Serializable {
+
 
     private static final long serialVersionUID = 1L;
 
@@ -43,6 +56,8 @@ public class PodInfo implements Serializable {
     private String imagePullPolicy;
 
     private String labels;
+
+
 
     public Integer getPodId() {
         return podId;
@@ -156,5 +171,46 @@ public class PodInfo implements Serializable {
             ", imagePullPolicy = " + imagePullPolicy +
             ", labels = " + labels +
         "}";
+    }
+    public PodInfo(V1Pod item, int podId){
+        this.podId = podId;
+        V1PodSpec spec = item.getSpec();
+        if (spec != null) {
+            List<V1Container> containers = spec.getContainers();
+            if (containers != null && !containers.isEmpty()) {
+                V1Container container = containers.get(0);
+                if (container != null) {
+                    V1ResourceRequirements resources = container.getResources();
+                    if (resources != null) {
+                        Map<String, Quantity> requests = resources.getRequests();
+                        if (requests != null && requests.containsKey("cpu")) {
+                            this.cpuReq = new BigDecimal(requests.get("cpu").getNumber().toString());
+                        }
+                    }
+                    List<V1EnvVar> env = container.getEnv();
+                    if (env != null && !env.isEmpty()) {
+                        this.passwd = env.get(0).getValue();
+                    }
+                    this.containerName = container.getName();
+                    String image = container.getImage();
+                    if (image != null) {
+                        if (image.contains("uos")) this.imageId = 1;
+                        else if (image.contains("kylin")) this.imageId = 2;
+                        else this.imageId = 3;
+                    }
+                    this.imagePullPolicy = container.getImagePullPolicy();
+                }
+            }
+            this.hostName = spec.getNodeName();
+        }
+
+        V1ObjectMeta metadata = item.getMetadata();
+        if (metadata != null) {
+            this.podName = metadata.getName();
+            Map<String, String> labels = metadata.getLabels();
+            if (labels != null) {
+                this.labels = labels.toString();
+            }
+        }
     }
 }

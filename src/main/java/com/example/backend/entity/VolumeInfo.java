@@ -25,9 +25,10 @@ public class VolumeInfo implements Serializable {
 
     private Integer podId;
 
-    private Integer podName;
 
-    private Integer podPath;
+    private String podName;
+
+    private String podPath;
 
     private Long sizeMb;
 
@@ -55,19 +56,19 @@ public class VolumeInfo implements Serializable {
         this.podId = podId;
     }
 
-    public Integer getPodName() {
+    public String  getPodName() {
         return podName;
     }
 
-    public void setPodName(Integer podName) {
+    public void setPodName(String podName) {
         this.podName = podName;
     }
 
-    public Integer getPodPath() {
+    public String  getPodPath() {
         return podPath;
     }
 
-    public void setPodPath(Integer podPath) {
+    public void setPodPath(String  podPath) {
         this.podPath = podPath;
     }
 

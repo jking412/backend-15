@@ -1,5 +1,6 @@
 package com.example.backend.dao;
 
+import com.example.backend.entity.PodInfo;
 import com.example.backend.entity.Pod_old;
 import com.example.backend.k3s.K3s;
 import com.example.backend.utils.Regexp;
@@ -22,9 +23,9 @@ public class PodDaoImpl implements PodDao{
     // 这个函数的正确性需要以下1点来保证
     // 1. 一个pod中只有一个container
     @Override
-    public List<Pod_old> listPods(String podImage) throws ApiException {
+    public List<PodInfo> listPods(String podImage) throws ApiException {
 
-        List<Pod_old> res = new ArrayList<>();
+        List<PodInfo> res = new ArrayList<>();
 
         V1PodList podList = k3s.listPod();
         for (var item : podList.getItems()){
@@ -40,9 +41,9 @@ public class PodDaoImpl implements PodDao{
 
                 int podId = regexp.getPodId(containerName);
                 if(podId == -1)continue;
-                Pod_old podOld = new Pod_old(item,podId);
+                PodInfo pod=new PodInfo(item,podId);
 
-                res.add(podOld);
+                res.add(pod);
             }
         }
 
@@ -50,12 +51,11 @@ public class PodDaoImpl implements PodDao{
     }
 
     @Override
-    public Pod_old getPod(String podImage, String podName) throws ApiException {
-        List<Pod_old> podOldList = listPods(podImage);
-        Pod_old res = null;
+    public PodInfo getPod(String podImage, String podName) throws ApiException {
+        List<PodInfo> podOldList = listPods(podImage);
+        PodInfo res = null;
         for (var item : podOldList){
-            if (item.getV1Pod().getMetadata() == null)continue;
-            if (item.getV1Pod().getMetadata().getName().equals(podName)){
+            if (item.getPodName().equals(podName)){
                 res = item;
                 break;
             }
