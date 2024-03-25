@@ -55,7 +55,7 @@ public class PodService {
             if(Objects.requireNonNull(item.getMetadata()).getDeletionTimestamp() != null)continue;
 
             String tmpPodImage = regexp.getPodImage(containerName);
-//todo:建立image表，并插入2个image数据
+            //todo:建立image表，并插入2个image数据
             podImage = pod.getImageName();
             if (tmpPodImage.equals(podImage)){
                 podId = regexp.getPodId(containerName);
@@ -72,7 +72,7 @@ public class PodService {
         podInfo.setHostName(pod.getHostName());
         podInfo.setContainerName(pod.getContainerName());
         podInfo.setImagePullPolicy(pod.getImagePullPolicy());
-        podInfo.setImageId(imagesService.getOne(new LambdaQueryWrapper<Images>().eq(Images::getImageName, podImage)).getImageId());
+//        podInfo.setImageId(imagesService.getOne(new LambdaQueryWrapper<Images>().eq(Images::getImageName, podImage)).getImageId());
         podInfo.setLabels(pod.getLabels().toString());
         Integer res=podInfoMapper.insert(podInfo);
         if(res==1){

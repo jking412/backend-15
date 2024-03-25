@@ -1,7 +1,6 @@
 package com.example.backend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.example.backend.Pojo.User;
 import com.example.backend.entity.UserInfo;
 import com.example.backend.k3s.K3sPod;
 import com.example.backend.mapper.LoginMapper;
@@ -28,6 +27,7 @@ public class LoginService {
         UserInfo u = new UserInfo();
         u.setEmail(user.getEmail());
         u.setPassword(user.getPassword());
+        u.setUsername(user.getUsername());
         loginMapper.insert(u);
 
     }
