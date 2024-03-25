@@ -126,4 +126,24 @@ public class PodService {
     public Object get(int num) {
         return podInfoMapper.selectById(num);
     }
+
+    public boolean updateInDatabase(K3sPod k3sPod) {
+        PodInfo podInfo = new PodInfo();
+        podInfo.setPodId(k3sPod.getPodId());
+        podInfo.setPodName(k3sPod.getPodName());
+        podInfo.setCpuReq(BigDecimal.valueOf(k3sPod.getCpuReq()));
+        podInfo.setCpuLimit(BigDecimal.valueOf(k3sPod.getCpuLimit()));
+        podInfo.setMemoryReq(BigDecimal.valueOf(k3sPod.getMemoryReq()));
+        podInfo.setMemoryLimit(BigDecimal.valueOf(k3sPod.getMemoryLimit()));
+        podInfo.setPasswd(k3sPod.getPasswd());
+        podInfo.setHostName(k3sPod.getHostName());
+        podInfo.setContainerName(k3sPod.getContainerName());
+        podInfo.setImagePullPolicy(k3sPod.getImagePullPolicy());
+        podInfo.setLabels(k3sPod.getLabels().toString());
+        Integer res = podInfoMapper.updateById(podInfo);
+        if (res == 1){
+            return true;
+        }
+        return false;
+    }
 }

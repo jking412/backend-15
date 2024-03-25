@@ -80,4 +80,16 @@ public class ContainerController {
         return Result.success(204,"删除成功");
     }
 
+//    @ApiOperation("更新容器")
+//    @PutMapping()
+//    public Result update(@RequestBody com.example.backend.entity.K3sPodConfig podConfig) throws Exception {
+//        K3sPod k3sPod = new K3sPod(podConfig);
+//        boolean res = uosService.updatePod(k3sPod);
+//        boolean res1 = podService.updateInDatabase(k3sPod);
+//        if (res && res1){
+//            return Result.success(200,"更新成功");
+//        }
+//        return Result.error(500,"更新失败");
+//    }
+
 }

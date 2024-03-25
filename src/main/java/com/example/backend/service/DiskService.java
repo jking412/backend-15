@@ -188,4 +188,33 @@ public class DiskService {
         wrapper.eq("volume_name",name);
         return volumeInfoMapper.selectOne(wrapper);
     }
+
+    public boolean update(Disk disk) {
+// 删除原有的diskPath/disk.getName()文件夹及其下所有文件
+        // 创建新的diskPath/disk.getName()文件夹
+        // 将podPath下的文件复制到diskPath/disk.getName()文件夹下
+        // 用kubectl cp podName:podPath rootPath/diskPath/disk.getName()
+        // 获取程序运行的rootPath
+        String rootPath = System.getProperty("user.dir");
+        List<String> command = List.of("kubectl", "cp", disk.getPodName() + ":" + disk.getPodPath(), rootPath + "/" + diskPath + "/" + disk.getName());
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        try {
+            Process process = processBuilder.start();
+            process.waitFor();
+            QueryWrapper<VolumeInfo> wrapper = new QueryWrapper<>();
+            wrapper.eq("volume_name",disk.getName());
+            VolumeInfo volumeInfo = volumeInfoMapper.selectOne(wrapper);
+            volumeInfo.setPodName(disk.getPodName());
+            volumeInfo.setPodPath(disk.getPodPath());
+            volumeInfo.setSizeMb((getDirectorySize(new File(diskPath + "/" + disk.getName()))/1024/1024));
+            if(volumeInfoMapper.update(volumeInfo,wrapper) <= 0){
+                return false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+
+    }
 }

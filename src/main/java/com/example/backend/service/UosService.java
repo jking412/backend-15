@@ -375,5 +375,8 @@ public class UosService {
         return list;
     }
 
-
+    //更新容器
+    public boolean updatePod(K3sPod k3sPod) {
+        return false;
+    }
 }
