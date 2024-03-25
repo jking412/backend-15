@@ -1,6 +1,7 @@
 package com.example.backend.k3s;
 
 
+import com.example.backend.Pojo.K3sPodConfig;
 import com.example.backend.k3s.disk.Disk;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
@@ -26,9 +27,12 @@ public class K3sPod {
     private String podName;
     private String hostName;
     private String containerName;
+
+    private Integer imageId;
     private String imageName;
     private String imagePullPolicy;
-    private Map<String,String> labels;
+
+    private Map<String, String> labels;
     private List<Integer> ports;
     // mountPath:Disk
     private Map<String, Disk> mountDisks;
@@ -52,6 +56,7 @@ public class K3sPod {
 
     public K3sPod(V1Pod v1pod){
 
+        // TODO: 默认认为pod只有一个container且第一个container是我们需要的是一个危险的行为
         V1Container v1podContainer = v1pod.getSpec().getContainers().get(0);
         podId = Integer.parseInt(v1podContainer.getName().substring(4));
         podName = v1pod.getMetadata().getName();
@@ -108,6 +113,18 @@ public class K3sPod {
     }
 
     // String imageName,String podName,String passwd,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit
+
+    public K3sPod(K3sPodConfig k3sPodConfig){
+        this();
+        this.imageName = k3sPodConfig.getImageName();
+        this.podName = k3sPodConfig.getName();
+        this.passwd = k3sPodConfig.getPasswd();
+        this.hostName = k3sPodConfig.getHostName();
+        this.cpuReq = k3sPodConfig.getCpuReq();
+        this.cpuLimit = k3sPodConfig.getCpuLimit();
+        this.memoryReq = k3sPodConfig.getMemoryReq();
+        this.memoryLimit = k3sPodConfig.getMemoryLimit();
+    }
     public K3sPod(String imageName,String podName,String passwd,String hostName ,int cpuReq,int cpuLimit,int memoryReq,int memoryLimit){
         this();
         this.imageName = imageName;
@@ -146,6 +163,8 @@ public class K3sPod {
             volumeMounts.put(volumeName,mountPath);
         }
     }
+
+
 
     public void setMountDisks(Map<String,Disk> mountDisks){
         this.mountDisks = mountDisks;

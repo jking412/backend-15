@@ -35,3 +35,4 @@ build/
 ## Local Data ##
 data
 config
+springboot.log*

@@ -1,35 +1,21 @@
 k3s:
   max-container-num: 10
 
+spring:
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql://localhost:3306/os?useUnicode=true&characterEncoding=utf-8&useSSL=false
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+
 disk:
   path: "data/disk"
 
-nginx:
-  conf:
-    file:
-      path: "data/nginx"
-      name: "default.conf"
-  template:
-    upstream: |
-      upstream %s {
-          server %s;
-      }
-    server: |
-      server {
-          listen 80;
-      %s
-      }
-    location: |
-      location %s {
-      	proxy_pass http://%s/;
-      	proxy_set_header Host $http_host;
-      	proxy_set_header Accept-Encoding gzip;
-      }
-    location-websockify: |
-      location %s/websockify {
-        proxy_pass http://%s/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "Upgrade";
-        proxy_set_header Host $host;
-      }
+logging:
+  pattern:
+    console: "[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} %c %M %L %m%n"
+  file:
+    name: springboot.log
+    path: ./
+

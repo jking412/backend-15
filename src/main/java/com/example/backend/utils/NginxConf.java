@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-@Component
 public class NginxConf {
 
     // upstreamName: serverDomain

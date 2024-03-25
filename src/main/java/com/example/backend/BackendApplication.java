@@ -11,16 +11,19 @@ import io.kubernetes.client.openapi.models.*;
 import io.kubernetes.client.proto.V1;
 import io.kubernetes.client.util.Config;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-@SpringBootApplication
+@SpringBootApplication()
+@MapperScan("com.example.backend.mapper")
 public class BackendApplication {
 
 	public static void main(String[] args) throws Exception {

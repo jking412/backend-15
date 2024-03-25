@@ -1,12 +1,14 @@
 package com.example.backend.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.backend.k3s.disk.Disk;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -14,6 +16,9 @@ public class DiskService {
 
    @Value("${disk.path}")
     private String diskPath;
+//
+//   @Autowired
+//   private VolumeMapper volumeMapper;
 
     public boolean create(Disk disk) {
         // 在diskPath下创建一个名为disk.getName()的文件夹，如果存在则报错
@@ -38,7 +43,14 @@ public class DiskService {
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         try {
             Process process = processBuilder.start();
-            // output stdout and stderr
+            process.waitFor();
+//            Volume volume = new Volume();
+//            volume.setVolumeName(disk.getName());
+//            volume.setSizeMb((getDirectorySize(diskFile)/1024/1024));
+//            if(volumeMapper.insert(volume) <= 0){
+//                return false;
+//            }
+//             output stdout and stderr
 //            BufferedReader reader = new BufferedReader(new java.io.InputStreamReader(process.getInputStream()));
 //            BufferedReader errorReader = new BufferedReader(new java.io.InputStreamReader(process.getErrorStream()));
 //            String line;
@@ -49,8 +61,7 @@ public class DiskService {
 //            while ((line = errorReader.readLine()) != null) {
 //                System.out.println(line);
 //            }
-
-            process.waitFor();
+//
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -60,10 +71,16 @@ public class DiskService {
 
     public boolean delete(Disk disk) {
         // 删除diskPath/disk.getName()文件夹及其下所有文件
+
         File diskFile = new File(diskPath + "/" + disk.getName());
-        if (!diskFile.exists()) {
-            return false;
-        }
+
+        System.out.println(diskFile.exists()+" "+diskFile.isDirectory());
+        boolean flag = diskFile.canRead();
+//        QueryWrapper<Volume> wrapper = new QueryWrapper<>();
+//        wrapper.eq("volume_name",disk.getName());
+//        if (!diskFile.getAbsoluteFile().exists() || volumeMapper.delete(wrapper) <= 0) {
+//            return false;
+//        }
         return deleteAllFileInDirectory(diskFile.getAbsolutePath());
     }
 
@@ -98,5 +115,46 @@ public class DiskService {
         return file.delete();
     }
 
+    public List<Object> getAllPodDiskPaths() {
+        List<Object> disks = getAllDisks();
+        return disks;
+    }
+
+    public List<Object> getAllDisks() {
+        File file = new File(diskPath);
+        File[] files = file.listFiles();
+        List<Object> disks = new ArrayList<>();
+        if (files != null) {
+            for (File f : files) {
+                if (f.isDirectory()) {
+                    HashMap<String,String> index = new HashMap<>();
+                    index.put("name", f.getName());
+                    index.put("path", f.getAbsolutePath());
+                    index.put("size", getDirectorySize(f).toString());
+                    disks.add(index);
+                }
+            }
+        }
+        return disks;
+    }
+
+    public static Long getDirectorySize(File directory) {
+        Long size = 0L;
+        if (directory.isDirectory()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile()) {
+                        size += file.length();
+                    } else {
+                        size += getDirectorySize(file);
+                    }
+                }
+            }
+        } else if (directory.isFile()) {
+            size += directory.length();
+        }
+        return size;
+    }
 
 }
