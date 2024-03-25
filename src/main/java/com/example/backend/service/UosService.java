@@ -4,8 +4,10 @@ package com.example.backend.service;
 import com.example.backend.dao.ConstantDao;
 import com.example.backend.dao.PodDao;
 import com.example.backend.dao.ScriptDao;
+import com.example.backend.entity.PodInfo;
 import com.example.backend.entity.Pod_old;
 import com.example.backend.k3s.*;
+import com.example.backend.mapper.PodInfoMapper;
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.*;
@@ -17,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -34,6 +37,9 @@ public class UosService {
     private int maxContainerNum;
 
     @Autowired
+    private PodInfoMapper podInfoMapper;
+    
+    @Autowired
     private K3s k3s;
 
     @Autowired
@@ -47,6 +53,7 @@ public class UosService {
     @Autowired
     @Qualifier("scriptDaoImpl")
     private ScriptDao scriptDao;
+
 
     private final String uosImageName = "uos";
 
@@ -71,7 +78,7 @@ public class UosService {
         }
         log.info("maxContainerNum: {}",maxContainerNum);
 
-        List<Pod_old> podOldList = podDao.listPods(uosImageName);
+        List<PodInfo> podOldList = podDao.listPods(uosImageName);
         StringBuilder logStr = new StringBuilder("exist uos pod num list: [ ");
         for (var item : podOldList){
             existService.add(item.getPodId());
@@ -100,6 +107,7 @@ public class UosService {
         }
         lock.lock();
         try {
+
             return internalDelete(num);
         }finally {
             lock.unlock();
@@ -366,4 +374,6 @@ public class UosService {
 
         return list;
     }
+
+
 }

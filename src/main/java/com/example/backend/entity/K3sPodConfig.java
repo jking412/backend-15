@@ -1,4 +1,4 @@
-package com.example.backend.Pojo;
+package com.example.backend.entity;
 
 import com.example.backend.k3s.disk.Disk;
 import lombok.AllArgsConstructor;

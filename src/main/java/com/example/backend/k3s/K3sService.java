@@ -62,7 +62,10 @@ public class K3sService {
 //        Network network = new Network();
 
         // create k3s service
-        api.createNamespacedService(namespace, service, null, null, null,null);
+        api.createNamespacedService(namespace, service, null, null, null, null);
+
+
+
     }
 
     public void delete(CoreV1Api api,String namespace) throws ApiException {
@@ -77,19 +80,21 @@ public class K3sService {
         });
     }
 
-    public List list(CoreV1Api api,String namespace) throws ApiException {
+    public List listUosService(CoreV1Api api,String namespace) throws ApiException {
         List result = new ArrayList();
         api.listNamespacedService(namespace, null, null, null, null, null, null, null, null, null, null).getItems().forEach(service -> {
             Map<String,Object> utilMap = new HashMap<>();
             Map<String,String> utilMap2 = new HashMap<>();
-            utilMap2.put("Name", service.getMetadata().getName());
-            utilMap2.put("Labels", String.valueOf(service.getMetadata().getNamespace()));
-            utilMap2.put("CreateTime", String.valueOf(service.getMetadata().getCreationTimestamp()));
-            utilMap2.put("ClusterIP", String.valueOf(service.getSpec().getClusterIP()));
-            utilMap2.put("Port", String.valueOf(service.getSpec().getPorts().get(0).getPort()));
-            utilMap2.put("TargetPort", String.valueOf(service.getSpec().getPorts().get(0).getTargetPort()));
-            utilMap.put(service.getMetadata().getName(), utilMap2 );
-            result.add(utilMap);
+            if (service.getMetadata().getName().startsWith("uos")) {
+                utilMap2.put("ServiceName", service.getMetadata().getName());
+                utilMap2.put("Labels", String.valueOf(service.getMetadata().getLabels()));
+                utilMap2.put("CreateTime", String.valueOf(service.getMetadata().getCreationTimestamp()));
+                utilMap2.put("ClusterIP", String.valueOf(service.getSpec().getClusterIP()));
+                utilMap2.put("Port", String.valueOf(service.getSpec().getPorts().get(0).getPort()));
+                utilMap2.put("TargetPort", String.valueOf(service.getSpec().getPorts().get(0).getTargetPort()));
+                utilMap.put(service.getMetadata().getName(), utilMap2);
+                result.add(utilMap);
+            }
         });
         return result;
     }
@@ -108,5 +113,16 @@ public class K3sService {
 //            e.printStackTrace();
 //        }
         return null;
+    }
+
+    public List<Object> list(CoreV1Api coreV1Api, String namespace) {
+        List<Object> result = new ArrayList<>();
+        try {
+            result = listUosService(coreV1Api, namespace);
+        } catch (ApiException e) {
+            e.printStackTrace();
+
+    }
+        return result;
     }
 }

@@ -1,7 +1,7 @@
 package com.example.backend.k3s;
 
 
-import com.example.backend.Pojo.K3sPodConfig;
+import com.example.backend.entity.K3sPodConfig;
 import com.example.backend.k3s.disk.Disk;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;

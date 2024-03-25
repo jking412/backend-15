@@ -1,11 +1,10 @@
 package com.example.backend.controller;
 
-import com.example.backend.Pojo.Result;
+import com.example.backend.entity.Result;
 import com.example.backend.service.DiskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
 import java.util.Map;
 
 @RestController
@@ -21,7 +20,7 @@ public class DiskController {
         com.example.backend.k3s.disk.Disk disk = new com.example.backend.k3s.disk.Disk(name,podName,podPath);
         boolean res = diskService.create(disk);
         if (res){
-            return Result.success(200,"创建成功");
+            return Result.success(200,Map.of("VolumeId",name,"podName",podName,"podPath",podPath));
         }
         return Result.error(500,"创建失败");
     }
@@ -39,7 +38,12 @@ public class DiskController {
 
     @GetMapping()
     public Result getAllDisks() throws Exception {
-        return Result.success(200, diskService.getAllDisks());
+        return Result.success(200, diskService.listAllVolumes());
+    }
+
+    @GetMapping("/getDisk")
+    public Result getDisk(@RequestParam String name) throws Exception {
+        return Result.success(200, diskService.getDisk(name));
     }
 
 }
