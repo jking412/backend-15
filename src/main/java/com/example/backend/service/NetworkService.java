@@ -3,9 +3,12 @@ package com.example.backend.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.backend.configure.Constants;
 import com.example.backend.entity.NetworkInfo;
+import com.example.backend.entity.SecurityGroup;
 import com.example.backend.k3s.K3s;
 import com.example.backend.k3s.Network;
 import com.example.backend.mapper.NetworkInfoMapper;
+import com.example.backend.mapper.SecurityGroupMapper;
+import com.example.backend.mapper.SecurityGroupPortsMapper;
 import io.kubernetes.client.openapi.models.V1Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,12 +26,33 @@ public class NetworkService {
     @Autowired
     private NetworkInfoMapper networkInfoMapper;
 
+    @Autowired
+    private SecurityGroupMapper securityGroupMapper;
+
+    @Autowired
+    private SecurityGroupPortsMapper securityGroupPortsMapper;
+
     public void create(Network network) throws Exception {
         network.create(k3s.getCoreV1Api(), Constants.DEFAULT);
         V1Service service = k3s.getCoreV1Api().readNamespacedService(network.getName(), Constants.DEFAULT, null);
 
         //insert into database
         //todo:添加安全组 和 podID
+        // create security group
+        SecurityGroup securityGroup = new SecurityGroup();
+        securityGroup.setGroupName(network.getSecurityGroup().getName());
+        securityGroup.setDescription(network.getSecurityGroup().getDescription());
+        securityGroupMapper.insert(securityGroup);
+        // create ports
+        for (com.example.backend.k3s.SecurityGroupPort port : network.getSecurityGroup().getPorts()) {
+            com.example.backend.entity.SecurityGroupPorts securityGroupPorts = new com.example.backend.entity.SecurityGroupPorts();
+            securityGroupPorts.setGroupId(securityGroup.getGroupId());
+            securityGroupPorts.setPort(port.getPort());
+            securityGroupPorts.setProtocol(port.getProtocol());
+            securityGroupPortsMapper.insert(securityGroupPorts);
+        }
+
+
         NetworkInfo networkInfo = new NetworkInfo();
         networkInfo.setNetworkName(network.getName());
         networkInfo.setPodId(network.getPodId());
